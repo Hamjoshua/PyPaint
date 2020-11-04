@@ -214,9 +214,13 @@
         </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QPushButton" name="poly_btn">
+        <widget class="QPushButton" name="drawPolygon">
          <property name="text">
-          <string>POLY</string>
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>cursors/polygon.png</normaloff>cursors/polygon.png</iconset>
          </property>
          <property name="checkable">
           <bool>true</bool>
@@ -348,6 +352,9 @@
     </item>
     <item row="1" column="1">
      <widget class="QLabel" name="main_pix">
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
       <property name="text">
        <string>pix</string>
       </property>

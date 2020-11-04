@@ -47,6 +47,7 @@ class Paint(QtWidgets.QMainWindow):
     def set_buttons(self):
         self.open_btn.triggered.connect(self.openFileNameDialog)
         self.save_btn.triggered.connect(self.saveFileDialog)
+        self.new_btn.triggered.connect(self.newFileDialog)
         self.deleteContent.triggered.connect(self.delete_some_content)
         self.choose_color.clicked.connect(self.openColorDialog)
 
@@ -58,6 +59,7 @@ class Paint(QtWidgets.QMainWindow):
         self.instruments_group.addButton(self.drawText)
         self.instruments_group.addButton(self.drawRect)
         self.instruments_group.addButton(self.drawRoundedRect)
+        self.instruments_group.addButton(self.drawPolygon)
         self.instruments_group.addButton(self.drawEllipse)
         self.instruments_group.addButton(self.cadre)
         self.instruments_group.addButton(self.move_btn)
@@ -86,6 +88,14 @@ class Paint(QtWidgets.QMainWindow):
         color = QtWidgets.QColorDialog.getColor()
         if color.isValid():
             self.change_color(color)
+
+    def newFileDialog(self):
+        properties, ok = QtWidgets.QInputDialog.getInt(self, 'Ширина:', '')
+
+        if ok:
+            self.pixmap = QtGui.QPixmap(properties, properties)
+            self.pixmap.fill(QtGui.QColor('#FFFFFF'))
+            self.main_pix.setPixmap(self.pixmap)
 
     def change_font(self):
         self.font = self.fontComboBox.currentFont()
@@ -119,6 +129,7 @@ class Paint(QtWidgets.QMainWindow):
             if event.button() == QtCore.Qt.LeftButton:
                 self.main_pix.setCursor(self.DrawCursor)
                 self.lastPoint = event.pos() - self.fault
+                self.drawLine_mouseMoveEvent(event)
 
     def drawLine_mouseMoveEvent(self, event):
         qp = QtGui.QPainter(self.main_pix.pixmap())
@@ -154,8 +165,7 @@ class Paint(QtWidgets.QMainWindow):
 
     def drawForm_mouseReleaseEvent(self, event):
         qp = QtGui.QPainter(self.pixmap)
-        qp.setPen(QtGui.QPen(self.color_for_tool, self.size_of_tool,
-                             QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.MiterJoin))
+        qp.setPen(self.regulary_pen())
         self.rect_for_draw = QtCore.QRect(self.firstPoint.x(), self.firstPoint.y(),
                                           self.lastPoint.x(), self.lastPoint.y())
         if self.which_tool == 'drawRoundedRect':
@@ -203,6 +213,29 @@ class Paint(QtWidgets.QMainWindow):
 
     def drawRoundedRect_mouseReleaseEvent(self, event):
         self.drawForm_mouseReleaseEvent(event)
+
+    # drawPolygon
+
+    def drawPolygon_mousePressEvent(self, event):
+        if event.buttons() == [QtCore.Qt.LeftButton + QtCore.Qt.LeftButton]:
+            print('2 click')
+        self.lastPoint = event.pos() - self.fault
+        if getattr(self, 'polygon_points', None):
+            self.polygon_points.append(self.lastPoint)
+        else:
+            self.firstPoint = event.pos() - self.fault
+            self.polygon_points = [self.firstPoint, self.lastPoint]
+
+    def drawPolygon_mouseMoveEvent(self, event):
+        self.main_pix.setPixmap(self.pixmap.copy())
+        qp = QtGui.QPainter(self.main_pix.pixmap())
+        self.lastPoint = event.pos() - self.fault
+        self.polygon_points[-1] = self.lastPoint
+        qp.setCompositionMode(QtGui.QPainter.RasterOp_SourceXorDestination)
+        qp.setPen(MAKE_FORM_PEN)
+        qp.pen().setDashOffset(1)
+        qp.drawPolygon(*self.polygon_points)
+        self.update()
 
     # pipette
 
@@ -274,12 +307,24 @@ class Paint(QtWidgets.QMainWindow):
             qp.setFont(self.font)
             qp.drawText(self.firstPoint, self.text)
             self.update()
+        elif self.which_tool == 'drawPolygon':
+            if event.key() == QtCore.Qt.Key_Return:
+                qp = QtGui.QPainter(self.main_pix.pixmap())
+                qp.setPen(self.regulary_pen())
+                qp.drawPolygon(*self.polygon_points)
+                self.update()
+                self.pixmap = self.main_pix.pixmap().copy()
+                self.polygon_points = []
 
     def change_tool(self, button):
         self.which_tool = button.objectName()
 
     def change_size_of_tool(self):
         self.size_of_tool = self.choose_font_point.value()
+
+    def regulary_pen(self):
+        return QtGui.QPen(self.color_for_tool, self.size_of_tool,
+                             QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.MiterJoin)
 
     def delete_some_content(self):
         if self.which_tool == 'select':
