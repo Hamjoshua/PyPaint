@@ -14,38 +14,6 @@ def except_hook(cls, exception, traceback):
     sys.__excepthook__(cls, exception, traceback)
 
 
-class history:
-    def __init__(self, some_value=None):
-        if some_value:
-            self.history = list(some_value)
-        else:
-            self.history = []
-        self.count = 0
-
-    def next(self):
-        if self.count + 1 < len(self.history):
-            self.count += 1
-            return self.history[self.count]
-
-    def back(self):
-        if self.count - 1 > -1:
-            self.count -= 1
-            return self.history[self.count]
-
-    def add(self, num):
-        self.history = self.history[:self.count + 1]
-        self.history.append(num)
-        if len(self.history) > 10:
-            self.history = self.history[1:]
-        self.count = len(self.history) - 1
-
-    def __repr__(self):
-        return str(self.history) if self.history else 'History is empty'
-
-    def __str__(self):
-        return self.__repr__()
-
-
 class Paint(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -64,10 +32,9 @@ class Paint(QtWidgets.QMainWindow):
         self.fault = QtCore.QPoint(193, 71)
 
         self.color_for_tool = QtGui.QColor('#000000')
-        self.size_of_tool = self.choose_size_of_tool.value()
+        self.size_of_tool = self.choose_font_point.value()
         self.font = self.fontComboBox.currentFont()
         self.text = 'j'
-        self.history = history()
 
         self.rect_for_draw = QtCore.QRect()
 
@@ -75,18 +42,16 @@ class Paint(QtWidgets.QMainWindow):
         self.DrawCursor = QtGui.QCursor(QtGui.QPixmap('cursors/draw.png'), 0, 0)
         self.PipetteCursor = QtGui.QCursor(QtGui.QPixmap('cursors/pipette.png'), 0, 0)
 
+    # def list_of_fonts(self):
+
     def set_buttons(self):
-        # init triggers for buttons in menu
         self.open_btn.triggered.connect(self.openFileNameDialog)
         self.save_btn.triggered.connect(self.saveFileDialog)
         self.new_btn.triggered.connect(self.newFileDialog)
-        self.makeForward.triggered.connect(self.next)
-        self.makeBack.triggered.connect(self.back)
         self.deleteContent.triggered.connect(self.delete_some_content)
         self.choose_color.clicked.connect(self.openColorDialog)
 
-        self.choose_font_point.valueChanged.connect(self.change_font_point)
-        self.choose_size_of_tool.valueChanged.connect(self.change_size_of_tool)
+        self.choose_font_point.valueChanged.connect(self.change_size_of_tool)
         self.fontComboBox.currentFontChanged.connect(self.change_font)
 
         self.instruments_group = QtWidgets.QButtonGroup()
@@ -118,7 +83,6 @@ class Paint(QtWidgets.QMainWindow):
                 self.im_true_size = im.size
                 self.pixmap = QtGui.QPixmap(fileName)
                 self.main_pix.setPixmap(self.pixmap)
-                self.history.add(self.pixmap.copy())
 
     def openColorDialog(self):
         color = QtWidgets.QColorDialog.getColor()
@@ -133,40 +97,12 @@ class Paint(QtWidgets.QMainWindow):
             self.pixmap.fill(QtGui.QColor('#FFFFFF'))
             self.main_pix.setPixmap(self.pixmap)
 
-    def next(self):
-        temp_pixmap = self.history.next()
-        if temp_pixmap:
-            self.pixmap = temp_pixmap.copy()
-            self.main_pix.setPixmap(self.pixmap)
-
-    def back(self):
-        temp_pixmap = self.history.back()
-        if temp_pixmap:
-            self.pixmap = temp_pixmap.copy()
-            self.main_pix.setPixmap(self.pixmap)
-
     def change_font(self):
         self.font = self.fontComboBox.currentFont()
-        print(self.font)
-        self.change_font_point()
 
     def change_color(self, color):
         self.color_for_tool = QtGui.QColor(color)
         self.choose_color.setStyleSheet(f"background-color: {color.name()};")
-
-    def change_font_point(self):
-        self.font.setPointSize(self.choose_font_point.value())
-        print(self.choose_font_point.value())
-
-    def change_tool(self, button):
-        self.which_tool = button.objectName()
-
-    def change_size_of_tool(self):
-        self.size_of_tool = self.choose_size_of_tool.value()
-
-    def regulary_pen(self):
-        return QtGui.QPen(self.color_for_tool, self.size_of_tool,
-                          QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.MiterJoin)
 
     def mousePressEvent(self, event):
         if not self.pixmap.isNull():
@@ -204,7 +140,6 @@ class Paint(QtWidgets.QMainWindow):
 
     def drawLine_mouseReleaseEvent(self, event):
         self.pixmap = self.main_pix.pixmap().copy()
-        self.history.add(self.pixmap.copy())
         self.lastPoint = QtCore.QPoint()
 
     # make form for drawForm_mouseMoveEvents
@@ -239,7 +174,6 @@ class Paint(QtWidgets.QMainWindow):
             getattr(qp, self.which_tool)(self.rect_for_draw)
         self.update()
         self.main_pix.setPixmap(self.pixmap)
-        self.history.add(self.pixmap.copy())
 
     # drawRect
 
@@ -338,7 +272,6 @@ class Paint(QtWidgets.QMainWindow):
     def cadre_mouseReleaseEvent(self, event):
         self.pixmap = self.pixmap.copy(self.rect_for_draw)
         self.main_pix.setPixmap(self.pixmap)
-        self.history.add(self.pixmap.copy())
 
     def select_mousePressEvent(self, event):
         self.drawForm_mousePressEvent(event)
@@ -382,7 +315,16 @@ class Paint(QtWidgets.QMainWindow):
                 self.update()
                 self.pixmap = self.main_pix.pixmap().copy()
                 self.polygon_points = []
-                self.history.add(self.pixmap.copy())
+
+    def change_tool(self, button):
+        self.which_tool = button.objectName()
+
+    def change_size_of_tool(self):
+        self.size_of_tool = self.choose_font_point.value()
+
+    def regulary_pen(self):
+        return QtGui.QPen(self.color_for_tool, self.size_of_tool,
+                             QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.MiterJoin)
 
     def delete_some_content(self):
         if self.which_tool == 'select':
@@ -392,7 +334,6 @@ class Paint(QtWidgets.QMainWindow):
             qp.eraseRect(self.rect_for_draw)
             self.update()
             self.main_pix.setPixmap(self.pixmap)
-            self.history.add(self.pixmap.copy())
 
     def saveFileDialog(self):
         options = QtWidgets.QFileDialog.Options()
@@ -420,3 +361,5 @@ if __name__ == '__main__':
     ex.show()
     sys.excepthook = except_hook
     sys.exit(app.exec())
+
+
