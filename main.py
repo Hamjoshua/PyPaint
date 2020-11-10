@@ -14,7 +14,7 @@ def except_hook(cls, exception, traceback):
     sys.__excepthook__(cls, exception, traceback)
 
 
-class history:
+class History:
     def __init__(self, some_value=None):
         if some_value:
             self.history = list(some_value)
@@ -67,7 +67,7 @@ class Paint(QtWidgets.QMainWindow):
         self.size_of_tool = self.choose_size_of_tool.value()
         self.font = self.fontComboBox.currentFont()
         self.text = 'j'
-        self.history = history()
+        self.history = History()
 
         self.rect_for_draw = QtCore.QRect()
 
@@ -78,8 +78,8 @@ class Paint(QtWidgets.QMainWindow):
     def set_buttons(self):
         # init triggers for buttons in menu
         self.open_btn.triggered.connect(self.openFileNameDialog)
-        self.save_btn.triggered.connect(self.saveFileDialog)
-        self.new_btn.triggered.connect(self.newFileDialog)
+        self.save_as_btn.triggered.connect(self.saveFileDialog)
+        self.create_btn.triggered.connect(self.newFileDialog)
         self.makeForward.triggered.connect(self.next)
         self.makeBack.triggered.connect(self.back)
         self.deleteContent.triggered.connect(self.delete_some_content)
@@ -94,7 +94,7 @@ class Paint(QtWidgets.QMainWindow):
         self.instruments_group.addButton(self.drawText)
         self.instruments_group.addButton(self.drawRect)
         self.instruments_group.addButton(self.drawRoundedRect)
-        self.instruments_group.addButton(self.drawPolygon)
+        # self.instruments_group.addButton(self.drawPolygon)
         self.instruments_group.addButton(self.drawEllipse)
         self.instruments_group.addButton(self.cadre)
         self.instruments_group.addButton(self.move_btn)
