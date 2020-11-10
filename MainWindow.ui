@@ -630,7 +630,7 @@ stop:1 #C6CFE0);</string>
             </property>
             <item>
              <property name="text">
-              <string comment="Выделить прямоугольную область" extracomment="Выделить прямоугольную область">Прямоугольная область</string>
+              <string>Прямоугольная область</string>
              </property>
              <property name="icon">
               <iconset>
