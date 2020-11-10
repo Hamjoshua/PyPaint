@@ -838,7 +838,7 @@ stop:1 #C6CFE0);</string>
                    <string notr="true">color: #6B7084;</string>
                   </property>
                   <property name="text">
-                   <string>                         Инструменты</string>
+                   <string>                    Инструменты</string>
                   </property>
                  </widget>
                 </item>
@@ -852,6 +852,12 @@ stop:1 #C6CFE0);</string>
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>45</height>
+                </size>
                </property>
                <layout class="QGridLayout" name="main_tools_layout">
                 <property name="leftMargin">
@@ -867,17 +873,17 @@ stop:1 #C6CFE0);</string>
                  <number>0</number>
                 </property>
                 <property name="horizontalSpacing">
-                 <number>39</number>
+                 <number>20</number>
                 </property>
                 <property name="verticalSpacing">
-                 <number>0</number>
+                 <number>2</number>
                 </property>
                 <item row="2" column="4">
                  <widget class="QPushButton" name="pipette_tool_btn">
                   <property name="maximumSize">
                    <size>
-                    <width>22</width>
-                    <height>22</height>
+                    <width>20</width>
+                    <height>20</height>
                    </size>
                   </property>
                   <property name="styleSheet">
@@ -906,8 +912,8 @@ stop:1 #C6CFE0);</string>
                  <widget class="QPushButton" name="lastic_tool_btn">
                   <property name="maximumSize">
                    <size>
-                    <width>22</width>
-                    <height>22</height>
+                    <width>20</width>
+                    <height>20</height>
                    </size>
                   </property>
                   <property name="styleSheet">
@@ -933,8 +939,8 @@ stop:1 #C6CFE0);</string>
                  <widget class="QPushButton" name="text_tool_btn">
                   <property name="maximumSize">
                    <size>
-                    <width>22</width>
-                    <height>22</height>
+                    <width>20</width>
+                    <height>20</height>
                    </size>
                   </property>
                   <property name="styleSheet">
@@ -962,42 +968,12 @@ stop:1 #C6CFE0);</string>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="7">
-                 <widget class="QPushButton" name="pencil_tool_btn">
-                  <property name="maximumSize">
-                   <size>
-                    <width>22</width>
-                    <height>22</height>
-                   </size>
-                  </property>
-                  <property name="styleSheet">
-                   <string notr="true">QPushButton:pressed {	
-	background-color: rgb(85, 170, 255);
-	border-left: 28px solid rgb(85, 170, 255);
-	border: none;
-}</string>
-                  </property>
-                  <property name="text">
-                   <string/>
-                  </property>
-                  <property name="icon">
-                   <iconset>
-                    <normaloff>icons/operations_icons/main_tools_icons/pencil.png</normaloff>icons/operations_icons/main_tools_icons/pencil.png</iconset>
-                  </property>
-                  <property name="checkable">
-                   <bool>false</bool>
-                  </property>
-                  <property name="flat">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
                 <item row="2" column="3">
                  <widget class="QPushButton" name="filling_tool_btn">
                   <property name="maximumSize">
                    <size>
-                    <width>22</width>
-                    <height>22</height>
+                    <width>20</width>
+                    <height>20</height>
                    </size>
                   </property>
                   <property name="styleSheet">
@@ -1022,42 +998,12 @@ stop:1 #C6CFE0);</string>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="3">
-                 <widget class="QPushButton" name="magnifier_tool_btn">
-                  <property name="maximumSize">
-                   <size>
-                    <width>22</width>
-                    <height>22</height>
-                   </size>
-                  </property>
-                  <property name="styleSheet">
-                   <string notr="true">QPushButton:pressed {	
-	background-color: rgb(85, 170, 255);
-	border-left: 28px solid rgb(85, 170, 255);
-	border: none;
-}</string>
-                  </property>
-                  <property name="text">
-                   <string/>
-                  </property>
-                  <property name="icon">
-                   <iconset>
-                    <normaloff>icons/operations_icons/main_tools_icons/magnifier_tool_icon.png</normaloff>icons/operations_icons/main_tools_icons/magnifier_tool_icon.png</iconset>
-                  </property>
-                  <property name="checkable">
-                   <bool>false</bool>
-                  </property>
-                  <property name="flat">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
                 <item row="1" column="0">
                  <widget class="QPushButton" name="cursore_tool_btn">
                   <property name="maximumSize">
                    <size>
-                    <width>22</width>
-                    <height>22</height>
+                    <width>20</width>
+                    <height>20</height>
                    </size>
                   </property>
                   <property name="toolTipDuration">
@@ -1085,12 +1031,72 @@ stop:1 #C6CFE0);</string>
                   </property>
                  </widget>
                 </item>
+                <item row="1" column="3">
+                 <widget class="QPushButton" name="magnifier_tool_btn">
+                  <property name="maximumSize">
+                   <size>
+                    <width>20</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">QPushButton:pressed {	
+	background-color: rgb(85, 170, 255);
+	border-left: 28px solid rgb(85, 170, 255);
+	border: none;
+}</string>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="icon">
+                   <iconset>
+                    <normaloff>icons/operations_icons/main_tools_icons/magnifier_tool_icon.png</normaloff>icons/operations_icons/main_tools_icons/magnifier_tool_icon.png</iconset>
+                  </property>
+                  <property name="checkable">
+                   <bool>false</bool>
+                  </property>
+                  <property name="flat">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="7">
+                 <widget class="QPushButton" name="pencil_tool_btn">
+                  <property name="maximumSize">
+                   <size>
+                    <width>20</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">QPushButton:pressed {	
+	background-color: rgb(85, 170, 255);
+	border-left: 28px solid rgb(85, 170, 255);
+	border: none;
+}</string>
+                  </property>
+                  <property name="text">
+                   <string/>
+                  </property>
+                  <property name="icon">
+                   <iconset>
+                    <normaloff>icons/operations_icons/main_tools_icons/pencil.png</normaloff>icons/operations_icons/main_tools_icons/pencil.png</iconset>
+                  </property>
+                  <property name="checkable">
+                   <bool>false</bool>
+                  </property>
+                  <property name="flat">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
                 <item row="1" column="4">
                  <widget class="QPushButton" name="brush_tool_btn">
                   <property name="maximumSize">
                    <size>
-                    <width>22</width>
-                    <height>22</height>
+                    <width>20</width>
+                    <height>20</height>
                    </size>
                   </property>
                   <property name="styleSheet">
@@ -1120,6 +1126,9 @@ stop:1 #C6CFE0);</string>
              </item>
              <item>
               <layout class="QHBoxLayout" name="tool_settings_frame">
+               <property name="spacing">
+                <number>2</number>
+               </property>
                <item>
                 <widget class="QFontComboBox" name="fontComboBox">
                  <property name="sizePolicy">
@@ -1136,8 +1145,8 @@ stop:1 #C6CFE0);</string>
                  </property>
                  <property name="maximumSize">
                   <size>
-                   <width>87</width>
-                   <height>22</height>
+                   <width>81</width>
+                   <height>20</height>
                   </size>
                  </property>
                  <property name="styleSheet">
@@ -1158,6 +1167,9 @@ editable {
                <item>
                 <widget class="QFrame" name="font_frame">
                  <layout class="QHBoxLayout" name="horizontalLayout_4">
+                  <property name="spacing">
+                   <number>2</number>
+                  </property>
                   <property name="leftMargin">
                    <number>0</number>
                   </property>
@@ -1174,8 +1186,8 @@ editable {
                    <widget class="QPushButton" name="bold_font_btn">
                     <property name="maximumSize">
                      <size>
-                      <width>22</width>
-                      <height>22</height>
+                      <width>20</width>
+                      <height>20</height>
                      </size>
                     </property>
                     <property name="text">
@@ -1203,8 +1215,8 @@ editable {
                    <widget class="QPushButton" name="italic_font_btn">
                     <property name="maximumSize">
                      <size>
-                      <width>22</width>
-                      <height>22</height>
+                      <width>20</width>
+                      <height>20</height>
                      </size>
                     </property>
                     <property name="text">
@@ -1229,8 +1241,8 @@ editable {
                    <widget class="QPushButton" name="highlight_font_btn">
                     <property name="maximumSize">
                      <size>
-                      <width>22</width>
-                      <height>22</height>
+                      <width>20</width>
+                      <height>20</height>
                      </size>
                     </property>
                     <property name="styleSheet">
@@ -1341,7 +1353,7 @@ editable {
             <property name="maximumSize">
              <size>
               <width>162</width>
-              <height>13</height>
+              <height>15</height>
              </size>
             </property>
             <property name="styleSheet">
@@ -1353,80 +1365,237 @@ editable {
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="chose_tool_comboBox">
+           <widget class="QFrame" name="chose_figue_tool_frame">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
             <property name="maximumSize">
              <size>
-              <width>174</width>
-              <height>423342</height>
+              <width>16777215</width>
+              <height>42</height>
              </size>
             </property>
-            <property name="styleSheet">
-             <string notr="true"> QComboBox {border: 1px solid#E1E5ED;}
-
- QComboBox::drop-down {
+            <layout class="QGridLayout" name="gridLayout">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <property name="horizontalSpacing">
+              <number>20</number>
+             </property>
+             <property name="verticalSpacing">
+              <number>2</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="QPushButton" name="line_btn">
+               <property name="maximumSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="toolTipDuration">
+                <number>-1</number>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QPushButton:pressed {	
+	background-color: rgb(85, 170, 255);
+	border-left: 28px solid rgb(85, 170, 255);
 	border: none;
 }</string>
-            </property>
-            <item>
-             <property name="text">
-              <string>Линия</string>
-             </property>
-             <property name="icon">
-              <iconset>
-               <normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/line_icon.png</normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/line_icon.png</iconset>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Кривая</string>
-             </property>
-             <property name="icon">
-              <iconset>
-               <normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/curve_line_icon.png</normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/curve_line_icon.png</iconset>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Эллипс</string>
-             </property>
-             <property name="icon">
-              <iconset>
-               <normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/ellipse_icon.png</normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/ellipse_icon.png</iconset>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Прямоугольник</string>
-             </property>
-             <property name="icon">
-              <iconset>
-               <normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/rectangle_icon.png</normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/rectangle_icon.png</iconset>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Округлый прямоугольник</string>
-             </property>
-             <property name="icon">
-              <iconset>
-               <normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/rounded_ectangle_icon.png</normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/rounded_ectangle_icon.png</iconset>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Произвольная фигура</string>
-             </property>
-             <property name="icon">
-              <iconset>
-               <normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/arbitrary_figure_icon.png</normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/arbitrary_figure_icon.png</iconset>
-             </property>
-            </item>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/line_icon.png</normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/line_icon.png</iconset>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QPushButton" name="rounded_ectangle_btn">
+               <property name="maximumSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="toolTipDuration">
+                <number>-1</number>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QPushButton:pressed {	
+	background-color: rgb(85, 170, 255);
+	border-left: 28px solid rgb(85, 170, 255);
+	border: none;
+}</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/rounded_ectangle_icon.png</normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/rounded_ectangle_icon.png</iconset>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QPushButton" name="rectangle_btn">
+               <property name="maximumSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="toolTipDuration">
+                <number>-1</number>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QPushButton:pressed {	
+	background-color: rgb(85, 170, 255);
+	border-left: 28px solid rgb(85, 170, 255);
+	border: none;
+}</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/rectangle_icon.png</normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/rectangle_icon.png</iconset>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QPushButton" name="curve_line_btn">
+               <property name="maximumSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="toolTipDuration">
+                <number>-1</number>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QPushButton:pressed {	
+	background-color: rgb(85, 170, 255);
+	border-left: 28px solid rgb(85, 170, 255);
+	border: none;
+}</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/curve_line_icon.png</normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/curve_line_icon.png</iconset>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QPushButton" name="ellipse_btn">
+               <property name="maximumSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="toolTipDuration">
+                <number>-1</number>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QPushButton:pressed {	
+	background-color: rgb(85, 170, 255);
+	border-left: 28px solid rgb(85, 170, 255);
+	border: none;
+}</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/ellipse_icon.png</normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/ellipse_icon.png</iconset>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QPushButton" name="arbitrary_figure_btn">
+               <property name="maximumSize">
+                <size>
+                 <width>20</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="toolTipDuration">
+                <number>-1</number>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QPushButton:pressed {	
+	background-color: rgb(85, 170, 255);
+	border-left: 28px solid rgb(85, 170, 255);
+	border: none;
+}</string>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/arbitrary_figure_icon.png</normaloff>icons/operations_icons/tools_create_figere_icons/figures_icon/arbitrary_figure_icon.png</iconset>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
           <item>
@@ -1508,19 +1677,6 @@ editable {
           <enum>Qt::Vertical</enum>
          </property>
         </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
        </item>
        <item>
         <widget class="QGroupBox" name="change_color_groupBox">
