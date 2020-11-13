@@ -1,363 +1,314 @@
-from PyQt5.QtWidgets import QApplication
 import sys
-import inspect
-from PyQt5 import QtWidgets, QtCore, QtGui, uic
-from PIL import ImageQt, Image, ImageFilter
+import random
+
+from PyQt5 import QtCore
+from PyQt5.QtGui import *
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QMainWindow, QButtonGroup, \
+    QInputDialog, QMessageBox, QFileDialog, QLabel, QColorDialog, QWidget, QTextBrowser
+
+from PyQt5 import uic  # Импортируем uic
+
+SELECTION_PEN = QPen(QColor(0xff, 0xff, 0xff), 1, QtCore.Qt.DashLine)
+MAKE_FORM_PEN = QPen(QColor(0xff, 0xff, 0xff), 1, QtCore.Qt.SolidLine)
+CADRE_FORM_PEN = QPen(QColor(0xff, 0xff, 0xff), 5, QtCore.Qt.SolidLine)
+
+COLORS = ['#000000', '#880016', '#ED1B24', '#FF7F26',
+          '#FEF200', '#21B24D', '#00A3E8', '#3F47CC',
+          '#FFFFFF', '#C3C3C3', '#B97A57', '#FFC90D',
+          '#EFE4AE', '#B5E51D', '#C7BFE6', '#A349A3']
+
+DEFAULT_COLORS = ['#000000', '#FFFFFF']
 
 
-SELECTION_PEN = QtGui.QPen(QtGui.QColor(0xff, 0xff, 0xff), 1, QtCore.Qt.DashLine)
-MAKE_FORM_PEN = QtGui.QPen(QtGui.QColor(0xff, 0xff, 0xff), 1, QtCore.Qt.SolidLine)
-CADRE_FORM_PEN = QtGui.QPen(QtGui.QColor(0xff, 0xff, 0xff), 5, QtCore.Qt.SolidLine)
-
-
-def except_hook(cls, exception, traceback):
-    sys.__excepthook__(cls, exception, traceback)
-
-
-class history:
-    def __init__(self, some_value=None):
-        if some_value:
-            self.history = list(some_value)
-        else:
-            self.history = []
-        self.count = 0
-
-    def next(self):
-        if self.count + 1 < len(self.history):
-            self.count += 1
-            return self.history[self.count]
-
-    def back(self):
-        if self.count - 1 > -1:
-            self.count -= 1
-            return self.history[self.count]
-
-    def add(self, num):
-        self.history = self.history[:self.count + 1]
-        self.history.append(num)
-        if len(self.history) > 10:
-            self.history = self.history[1:]
-        self.count = len(self.history) - 1
-
-    def __repr__(self):
-        return str(self.history) if self.history else 'History is empty'
-
-    def __str__(self):
-        return self.__repr__()
-
-
-class Paint(QtWidgets.QMainWindow):
-    def __init__(self):
-        super().__init__()
+class MainWindow(QMainWindow):  # , Ui_Form
+    def __init__(self, *args, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
         uic.loadUi('MainWindow.ui', self)
-        self.set_buttons()
-        self.file_extensions = "All Files (*);;JPG (*.jpg);;PNG (*.png)"
+        self.setWindowTitle('PyPaint')
+        self.setWindowIcon(QIcon('icons/main_icon.ico'))
+        self.tools_group = QButtonGroup(self)
+        self.connecting_buttons()
 
-        self.firstPoint = QtCore.QPoint()
-        self.lastPoint = QtCore.QPoint()
-        self.drawing = False
-        self.pixmap = QtGui.QPixmap()
+        # tools settings
+        self.font = QFont(self.fontComboBox.currentText())
+        self.tool_size = self.change_size_spinBox.value()
+        self.text_size = 12
+
+        self.active_color = self.main_color_btn_1
+        self.give_color = {self.main_color_btn_1: DEFAULT_COLORS[0],
+                           self.main_color_btn_2: DEFAULT_COLORS[1]}
+
+        self.active_tool = None
+        self.brush.click()
+
+        self.file_extensions = "All Files (*.png *.jpg);;JPG (*.jpg);;PNG (*.png)"
+        self.default_sizes_of_created_image = \
+            [f'{lg} * {lg * 3 // 4}' for lg in range(400, 1200, 200)]
+        self.difference_size = \
+            (self.width() - self.image.width(),
+             self.height() - self.image.height())
+
+        # Init default image
+        self.pixmap = QPixmap(800, 600)
+        self.pixmap.fill(QColor('#FFFFFF'))
         self.temp_pixmap = self.pixmap.copy()
-        self.im_true_size = (0, 0)
-        self.which_tool = 'drawLine'
+        self.currect_file_name = False
+        self.image.setPixmap(self.pixmap)
+        self.update_image_by_window_size()
 
-        self.fault = QtCore.QPoint(193, 71)
+        self.x_pos_image, self.y_pos_image = None, None
 
-        self.color_for_tool = QtGui.QColor('#000000')
-        self.size_of_tool = self.choose_size_of_tool.value()
-        self.font = self.fontComboBox.currentFont()
-        self.text = 'j'
-        self.history = history()
+        self.firstPoint = QtCore.QPoint()  # первая точка
+        self.lastPoint = QtCore.QPoint()  # прошлая точка
+
+        self.DrawCursor = QCursor(QPixmap('cursors/draw.png'), 0, 0)
+        self.PipetteCursor = QCursor(QPixmap('cursors/pipette.png'), 0, 0)
 
         self.rect_for_draw = QtCore.QRect()
 
-        # init cursors
-        self.DrawCursor = QtGui.QCursor(QtGui.QPixmap('cursors/draw.png'), 0, 0)
-        self.PipetteCursor = QtGui.QCursor(QtGui.QPixmap('cursors/pipette.png'), 0, 0)
-
-    def set_buttons(self):
-        # init triggers for buttons in menu
+    def connecting_buttons(self):
+        # Init triggers for buttons in file_menu
+        self.create_btn.triggered.connect(self.newFileDialog)
         self.open_btn.triggered.connect(self.openFileNameDialog)
         self.save_btn.triggered.connect(self.saveFileDialog)
-        self.new_btn.triggered.connect(self.newFileDialog)
-        self.makeForward.triggered.connect(self.next)
-        self.makeBack.triggered.connect(self.back)
-        self.deleteContent.triggered.connect(self.delete_some_content)
-        self.choose_color.clicked.connect(self.openColorDialog)
+        self.save_as_btn.triggered.connect(self.save_asFileDialog)
+        self.exit_btn.triggered.connect(exit)
 
-        self.choose_font_point.valueChanged.connect(self.change_font_point)
-        self.choose_size_of_tool.valueChanged.connect(self.change_size_of_tool)
-        self.fontComboBox.currentFontChanged.connect(self.change_font)
+        # Init triggers for buttons in image_menu
+        self.flip_gorizontally_btn.triggered.connect(self.flip_gorizontally_image)
+        self.flip_vertically_btn.triggered.connect(self.flip_vertically_image)
+        self.turn_90_right_btn.triggered.connect(self.turn_90_right_image)
+        self.turn_90_left_btn.triggered.connect(self.turn_90_left_image)
+        self.turn_180_btn.triggered.connect(self.turn_180_image)
 
-        self.instruments_group = QtWidgets.QButtonGroup()
-        self.instruments_group.addButton(self.drawLine)
-        self.instruments_group.addButton(self.drawText)
-        self.instruments_group.addButton(self.drawRect)
-        self.instruments_group.addButton(self.drawRoundedRect)
-        self.instruments_group.addButton(self.drawPolygon)
-        self.instruments_group.addButton(self.drawEllipse)
-        self.instruments_group.addButton(self.cadre)
-        self.instruments_group.addButton(self.move_btn)
-        self.instruments_group.addButton(self.select)
-        self.instruments_group.addButton(self.pipette)
+        # Init triggers for buttons in info_menu
+        self.info_btn.triggered.connect(self.show_info_form)
 
-        self.instruments_group.buttonClicked.connect(self.change_tool)
+        # Init triggers for buttons in tools_for_image_frame
+        # self.pushButton.clicked.connect(self.press_button)
+        # self.crop_image_btn.clicked.connect(self.press_button)
+        # self.cancel_selection_btn.clicked.connect(self.press_button)
 
-    def openFileNameDialog(self):
-        options = QtWidgets.QFileDialog.Options()
-        options |= QtWidgets.QFileDialog.DontUseNativeDialog
-        fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Открыть изображение",
-                                                            "",
-                                                            self.file_extensions,
-                                                            options=options)
-        if fileName:
-            if fileName[fileName.rfind('.'):] not in self.file_extensions:
-                self.showPopupDialog(QtWidgets.QMessageBox.Critical)
-            else:
-                im = Image.open(fileName)
-                self.im_true_size = im.size
-                self.pixmap = QtGui.QPixmap(fileName)
-                self.main_pix.setPixmap(self.pixmap)
-                self.history.add(self.pixmap.copy())
+        # Adding buttons to tools_group
+        self.tools_group.addButton(self.brush)
+        self.tools_group.addButton(self.pencil)
+        self.tools_group.addButton(self.text)
+        self.tools_group.addButton(self.filling)
+        self.tools_group.addButton(self.pipette)
+        self.tools_group.addButton(self.eraser)
+        self.tools_group.addButton(self.drawLine)
+        self.tools_group.addButton(self.drawCurveLine)
+        self.tools_group.addButton(self.drawEllipse)
+        self.tools_group.addButton(self.drawRect)
+        self.tools_group.addButton(self.drawRoundedRect)
+        self.tools_group.addButton(self.drawArbitraryFigure)
+        self.tools_group.buttonClicked.connect(self.change_tool)
+        # Init triggers for widgets in tool_settings_frame
+        self.change_size_spinBox.valueChanged.connect(self.change_size_of_tool)
+        self.fontComboBox.activated.connect(self.change_font)
+        self.bold.clicked.connect(self.change_font)
+        self.italic.clicked.connect(self.change_font)
+        self.underline.clicked.connect(self.change_font)
 
-    def openColorDialog(self):
-        color = QtWidgets.QColorDialog.getColor()
-        if color.isValid():
-            self.change_color(color)
+        # Init triggers for color buttons
+        for n in range(0, 16):
+            getattr(self, 'color_btn_%s' % n).clicked.connect(self.change_color)
+        self.main_color_btn_1.clicked.connect(self.change_active_color)
+        self.main_color_btn_2.clicked.connect(self.change_active_color)
+        self.reverse_main_colors_btn.clicked.connect(self.reverse_colors_btn)
+        self.restart_main_color_btn.clicked.connect(self.restart_colors_btn)
+        self.change_color_btn.clicked.connect(self.openColorDialog)
+
+    # File menu events
 
     def newFileDialog(self):
-        properties, ok = QtWidgets.QInputDialog.getInt(self, 'Ширина:', '')
+        item, ok_pressed = QInputDialog.getItem(
+            self, "Создание",
+            "Введите размер изображения (weight * height)" +
+            "\nили выберите из предложенных:",
+            self.default_sizes_of_created_image, 3, True)
 
-        if ok:
-            self.pixmap = QtGui.QPixmap(properties, properties)
-            self.pixmap.fill(QtGui.QColor('#FFFFFF'))
-            self.main_pix.setPixmap(self.pixmap)
+        try:
+            if ok_pressed:
+                self.pixmap = QtGui.QPixmap(*list(map(int, item.split('*'))))
+                self.pixmap.fill(QtGui.QColor('#FFFFFF'))
+                self.currect_file_name = False
+                self.image.setPixmap(self.pixmap)
+                self.update_image_by_window_size()
+        except ValueError:
+            QMessageBox.critical(
+                self, "Ошибка", "Неверный формат введённых данных",
+                QMessageBox.Ok)
 
-    def next(self):
-        temp_pixmap = self.history.next()
-        if temp_pixmap:
-            self.pixmap = temp_pixmap.copy()
-            self.main_pix.setPixmap(self.pixmap)
+    def openFileNameDialog(self):
+        fname, _ = QFileDialog.getOpenFileName(
+            self, "Открыть изображение", "", self.file_extensions)
 
-    def back(self):
-        temp_pixmap = self.history.back()
-        if temp_pixmap:
-            self.pixmap = temp_pixmap.copy()
-            self.main_pix.setPixmap(self.pixmap)
+        if fname:
+            self.pixmap = QtGui.QPixmap(fname)
+            self.currect_file_name = fname
+            self.image.setPixmap(self.pixmap)
+            self.update_image_by_window_size()
+
+    def saveFileDialog(self):
+        if self.currect_file_name:
+            self.pixmap.save(self.currect_file_name)
+        else:
+            self.save_asFileDialog()
+
+    def save_asFileDialog(self):
+        fname, _ = QFileDialog.getSaveFileName(
+            self, "Сохранить файл", "", self.file_extensions)
+        if fname:
+            self.currect_file_name = fname
+            self.pixmap.save(fname)
+
+    # Image events
+
+    def update_image_by_window_size(self):
+        main_image_widget_width = self.width() - self.difference_size[0]
+        main_image_widget_height = self.height() - self.difference_size[1]
+        image_width, image_height = self.pixmap.width(), self.pixmap.height()
+
+        if image_width > main_image_widget_width or \
+                image_height > main_image_widget_height:
+
+            if image_height - main_image_widget_height >= \
+                    image_width - main_image_widget_width:
+
+                image_height = main_image_widget_height
+                image_width = self.pixmap.width() * image_height // self.pixmap.height()
+
+            elif image_height - main_image_widget_height <= \
+                    image_width - main_image_widget_width:
+
+                image_width = main_image_widget_width
+                image_height = self.pixmap.height() * image_width // self.pixmap.width()
+
+        self.pixmap = self.pixmap.scaled(image_width, image_height, QtCore.Qt.KeepAspectRatio)
+        self.image.resize(image_width, image_height)
+        self.image.move((main_image_widget_width - image_width) // 2,
+                        (main_image_widget_height - image_height) // 2)
+        self.image.setPixmap(self.pixmap)
+
+    # to change image
+
+    def flip_gorizontally_image(self):
+        self.pixmap = self.pixmap.transformed(QTransform().scale(1, -1))
+        self.image.setPixmap(self.pixmap)
+        self.update_image_by_window_size()
+
+    def flip_vertically_image(self):
+        self.pixmap = self.pixmap.transformed(QTransform().scale(-1, 1))
+        self.image.setPixmap(self.pixmap)
+        self.update_image_by_window_size()
+
+    def turn_90_right_image(self):
+        self.pixmap = self.pixmap.transformed(QTransform().rotate(90))
+        self.image.setPixmap(self.pixmap)
+        self.update_image_by_window_size()
+
+    def turn_90_left_image(self):
+        self.pixmap = self.pixmap.transformed(QTransform().rotate(270))
+        self.image.setPixmap(self.pixmap)
+        self.update_image_by_window_size()
+
+    def turn_180_image(self):
+        self.pixmap = self.pixmap.transformed(QTransform().rotate(180))
+        self.image.setPixmap(self.pixmap)
+        self.update_image_by_window_size()
+
+    def show_info_form(self):
+        self.second_form = InfoForm(self)
+        self.second_form.show()
+
+    # Change
 
     def change_font(self):
         self.font = self.fontComboBox.currentFont()
-        print(self.font)
-        self.change_font_point()
-
-    def change_color(self, color):
-        self.color_for_tool = QtGui.QColor(color)
-        self.choose_color.setStyleSheet(f"background-color: {color.name()};")
-
-    def change_font_point(self):
-        self.font.setPointSize(self.choose_font_point.value())
-        print(self.choose_font_point.value())
+        self.font.setBold(self.bold.isChecked())
+        self.font.setItalic(self.italic.isChecked())
+        self.font.setUnderline(self.underline.isChecked())
 
     def change_tool(self, button):
-        self.which_tool = button.objectName()
+        self.active_tool = button.objectName()
+
+        if self.active_tool == self.text.objectName():
+            self.change_size_spinBox.setValue(self.text_size)
+        else:
+            self.change_size_spinBox.setValue(self.tool_size)
 
     def change_size_of_tool(self):
-        self.size_of_tool = self.choose_size_of_tool.value()
+        if self.active_tool == self.text.objectName():
+            self.text_size = self.change_size_spinBox.value()
+            self.font.setPointSize(self.text_size)
+        else:
+            self.tool_size = self.change_size_spinBox.value()
 
-    def regulary_pen(self):
-        return QtGui.QPen(self.color_for_tool, self.size_of_tool,
-                          QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.MiterJoin)
+    def change_active_color(self):
+        self.active_color = self.sender()
+
+    # Color buttons events.
+
+    def change_color(self):
+        obj_name = self.sender().objectName()
+        color = COLORS[int(obj_name[obj_name.rfind("_") + 1:])]
+        self.set_background_btn_color(color)
+
+    def set_background_btn_color(self, color, btn=False):
+        if not btn:
+            btn = self.active_color
+        btn.setStyleSheet(
+            'QPushButton:pressed {background-color: rgb(85, 170, 255);' +
+            'border-left: 28px solid rgb(85, 170, 255);border: none;}' +
+            'QPushButton{border:1px solid #A0A0A0;' +
+            f'background: {color}' + ';}')
+        self.give_color[self.active_color] = QColor(color)
+
+    def openColorDialog(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self.set_background_btn_color(f'rgb{color.getRgb()}')
+
+    def reverse_colors_btn(self):
+        first_color_key, second_color_key = self.give_color.keys()
+        self.give_color[first_color_key], self.give_color[second_color_key] = \
+            self.give_color[second_color_key], self.give_color[first_color_key]
+        self.set_background_btn_color(self.give_color[first_color_key], btn=self.main_color_btn_1)
+        self.set_background_btn_color(self.give_color[second_color_key], btn=self.main_color_btn_2)
+
+    def restart_colors_btn(self):
+        first_color_key, second_color_key = self.give_color.keys()
+        self.give_color[first_color_key], self.give_color[second_color_key] = \
+            self.give_color[second_color_key], self.give_color[first_color_key]
+        self.set_background_btn_color(DEFAULT_COLORS[0], btn=self.main_color_btn_1)
+        self.set_background_btn_color(DEFAULT_COLORS[1], btn=self.main_color_btn_2)
+
+    # Mouse events.
 
     def mousePressEvent(self, event):
-        if not self.pixmap.isNull():
-            operation = getattr(self, '%s_mousePressEvent' % self.which_tool)
-            if operation:
-                operation(event)
+        self.update_image_by_window_size()
+        self.cursor_position_label.setText(
+            f'{self.image.mapFromGlobal(QCursor.pos()).x()} * ' +
+            f'{self.image.mapFromGlobal(QCursor.pos()).y()}px')
+        self.image_size_label_2.setText(f'{self.pixmap.width()} * {self.pixmap.height()}px')
+
+        operation = getattr(self, '%s_mousePressEvent' % self.active_tool)
+        if operation:
+            operation(event)
 
     def mouseMoveEvent(self, event):
-        if not self.pixmap.isNull():
-            operation = getattr(self, '%s_mouseMoveEvent' % self.which_tool, None)
-            if operation:
-                operation(event)
+        operation = getattr(self, '%s_mouseMoveEvent' % self.active_tool, None)
+        if operation:
+            operation(event)
 
     def mouseReleaseEvent(self, event):
-        if not self.pixmap.isNull():
-            operation = getattr(self, '%s_mouseReleaseEvent' % self.which_tool, None)
-            if operation:
-                operation(event)
+        operation = getattr(self, '%s_mouseReleaseEvent' % self.active_tool, None)
+        if operation:
+            operation(event)
 
-    # drawLine
-
-    def drawLine_mousePressEvent(self, event):
-        if not self.pixmap.isNull():
-            if event.button() == QtCore.Qt.LeftButton:
-                self.main_pix.setCursor(self.DrawCursor)
-                self.lastPoint = event.pos() - self.fault
-                self.drawLine_mouseMoveEvent(event)
-
-    def drawLine_mouseMoveEvent(self, event):
-        qp = QtGui.QPainter(self.main_pix.pixmap())
-        qp.setPen(QtGui.QPen(self.color_for_tool, self.size_of_tool, QtCore.Qt.SolidLine))
-        qp.drawLine(self.lastPoint, event.pos() - self.fault)
-        self.lastPoint = event.pos() - self.fault
-        self.update()
-
-    def drawLine_mouseReleaseEvent(self, event):
-        self.pixmap = self.main_pix.pixmap().copy()
-        self.history.add(self.pixmap.copy())
-        self.lastPoint = QtCore.QPoint()
-
-    # make form for drawForm_mouseMoveEvents
-
-    def drawForm_mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self.main_pix.setCursor(QtCore.Qt.CrossCursor)
-            self.firstPoint = event.pos() - self.fault
-            self.lastPoint = event.pos() - self.fault - self.firstPoint
-
-    def drawForm_mouseMoveEvent(self, event, qp, pen=MAKE_FORM_PEN):
-        self.lastPoint = event.pos() - self.fault - self.firstPoint
-        qp.setCompositionMode(QtGui.QPainter.RasterOp_SourceXorDestination)
-        qp.setPen(pen)
-        qp.pen().setDashOffset(1)
-        self.rect_for_draw = QtCore.QRect(self.firstPoint.x(), self.firstPoint.y(),
-                                          self.lastPoint.x(), self.lastPoint.y())
-        if self.which_tool == 'drawRoundedRect':
-            getattr(qp, self.which_tool)(self.rect_for_draw, 10, 10, QtCore.Qt.RelativeSize)
-        else:
-            getattr(qp, self.which_tool)(self.rect_for_draw)
-        self.update()
-
-    def drawForm_mouseReleaseEvent(self, event):
-        qp = QtGui.QPainter(self.pixmap)
-        qp.setPen(self.regulary_pen())
-        self.rect_for_draw = QtCore.QRect(self.firstPoint.x(), self.firstPoint.y(),
-                                          self.lastPoint.x(), self.lastPoint.y())
-        if self.which_tool == 'drawRoundedRect':
-            getattr(qp, self.which_tool)(self.rect_for_draw, 10, 10)
-        else:
-            getattr(qp, self.which_tool)(self.rect_for_draw)
-        self.update()
-        self.main_pix.setPixmap(self.pixmap)
-        self.history.add(self.pixmap.copy())
-
-    # drawRect
-
-    def drawRect_mousePressEvent(self, event):
-        self.drawForm_mousePressEvent(event)
-
-    def drawRect_mouseMoveEvent(self, event):
-        self.main_pix.setPixmap(self.pixmap.copy())
-        qp = QtGui.QPainter(self.main_pix.pixmap())
-        self.drawForm_mouseMoveEvent(event, qp)
-
-    def drawRect_mouseReleaseEvent(self, event):
-        self.drawForm_mouseReleaseEvent(event)
-
-    # drawEllipse
-
-    def drawEllipse_mousePressEvent(self, event):
-        self.drawForm_mousePressEvent(event)
-
-    def drawEllipse_mouseMoveEvent(self, event):
-        self.main_pix.setPixmap(self.pixmap.copy())
-        qp = QtGui.QPainter(self.main_pix.pixmap())
-        self.drawForm_mouseMoveEvent(event, qp)
-
-    def drawEllipse_mouseReleaseEvent(self, event):
-        self.drawForm_mouseReleaseEvent(event)
-
-    # drawRoundedRect
-
-    def drawRoundedRect_mousePressEvent(self, event):
-        self.drawForm_mousePressEvent(event)
-
-    def drawRoundedRect_mouseMoveEvent(self, event):
-        self.main_pix.setPixmap(self.pixmap.copy())
-        qp = QtGui.QPainter(self.main_pix.pixmap())
-        self.drawForm_mouseMoveEvent(event, qp)
-
-    def drawRoundedRect_mouseReleaseEvent(self, event):
-        self.drawForm_mouseReleaseEvent(event)
-
-    # drawPolygon
-
-    def drawPolygon_mousePressEvent(self, event):
-        if event.buttons() == [QtCore.Qt.LeftButton + QtCore.Qt.LeftButton]:
-            print('2 click')
-        self.lastPoint = event.pos() - self.fault
-        if getattr(self, 'polygon_points', None):
-            self.polygon_points.append(self.lastPoint)
-        else:
-            self.firstPoint = event.pos() - self.fault
-            self.polygon_points = [self.firstPoint, self.lastPoint]
-
-    def drawPolygon_mouseMoveEvent(self, event):
-        self.main_pix.setPixmap(self.pixmap.copy())
-        qp = QtGui.QPainter(self.main_pix.pixmap())
-        self.lastPoint = event.pos() - self.fault
-        self.polygon_points[-1] = self.lastPoint
-        qp.setCompositionMode(QtGui.QPainter.RasterOp_SourceXorDestination)
-        qp.setPen(MAKE_FORM_PEN)
-        qp.pen().setDashOffset(1)
-        qp.drawPolygon(*self.polygon_points)
-        self.update()
-
-    # pipette
-
-    def pipette_mousePressEvent(self, event):
-        self.main_pix.setCursor(self.PipetteCursor)
-        image = self.pixmap.toImage()
-        pixel = image.pixel(event.pos() - self.fault)
-        color_of_pixel = QtGui.QColor(pixel)
-        self.change_color(color_of_pixel)
-
-    def pipette_mouseMoveEvent(self, event):
-        self.pipette_mousePressEvent(event)
-
-    def cadre_mousePressEvent(self, event):
-        self.drawForm_mousePressEvent(event)
-
-    def cadre_mouseMoveEvent(self, event):
-        self.which_tool = 'drawRect'
-        self.main_pix.setPixmap(self.pixmap.copy())
-        qp = QtGui.QPainter(self.main_pix.pixmap())
-        self.drawForm_mouseMoveEvent(event, qp, CADRE_FORM_PEN)
-        # draw crosshair at the center of rect
-        qp.setPen(CADRE_FORM_PEN)
-        shift_crosshair_x = QtCore.QPoint(10, 0)
-        shift_crosshair_y = QtCore.QPoint(0, 10)
-        if abs(self.rect_for_draw.width()) > 25 and abs(self.rect_for_draw.height()) > 25:
-            qp.drawLine(self.rect_for_draw.center() - shift_crosshair_x,
-                        self.rect_for_draw.center() + shift_crosshair_x)
-            qp.drawLine(self.rect_for_draw.center() - shift_crosshair_y,
-                        self.rect_for_draw.center() + shift_crosshair_y)
-        self.update()
-        self.which_tool = 'cadre'
-
-    def cadre_mouseReleaseEvent(self, event):
-        self.pixmap = self.pixmap.copy(self.rect_for_draw)
-        self.main_pix.setPixmap(self.pixmap)
-        self.history.add(self.pixmap.copy())
-
-    def select_mousePressEvent(self, event):
-        self.drawForm_mousePressEvent(event)
-
-    def select_mouseMoveEvent(self, event):
-        self.which_tool = 'drawRect'
-        self.main_pix.setPixmap(self.pixmap.copy())
-        qp = QtGui.QPainter(self.main_pix.pixmap())
-        self.drawForm_mouseMoveEvent(event, qp, SELECTION_PEN)
-        self.which_tool = 'select'
-
-    # drawText
-
-    def drawText_mousePressEvent(self, event):
-        if self.text:
-            self.pixmap = self.main_pix.pixmap()
-        else:
-            self.drawForm_mousePressEvent(event)
-        self.text = ""
+    # Keyboard events.
 
     def keyPressEvent(self, event):
         if self.which_tool == 'drawText':
@@ -369,14 +320,14 @@ class Paint(QtWidgets.QMainWindow):
             else:
                 self.text += event.text()
             self.main_pix.setPixmap(self.pixmap)
-            qp = QtGui.QPainter(self.main_pix.pixmap())
-            qp.setPen(QtGui.QPen(self.color_for_tool))
+            qp = QPainter(self.main_pix.pixmap())
+            qp.setPen(QPen(self.color_for_tool))
             qp.setFont(self.font)
             qp.drawText(self.firstPoint, self.text)
             self.update()
         elif self.which_tool == 'drawPolygon':
             if event.key() == QtCore.Qt.Key_Return:
-                qp = QtGui.QPainter(self.main_pix.pixmap())
+                qp = QPainter(self.main_pix.pixmap())
                 qp.setPen(self.regulary_pen())
                 qp.drawPolygon(*self.polygon_points)
                 self.update()
@@ -384,39 +335,310 @@ class Paint(QtWidgets.QMainWindow):
                 self.polygon_points = []
                 self.history.add(self.pixmap.copy())
 
-    def delete_some_content(self):
-        if self.which_tool == 'select':
-            qp = QtGui.QPainter(self.pixmap)
-            if self.pixmap.hasAlpha():
-                qp.setCompositionMode(QtGui.QPainter.CompositionMode_Clear)
-            qp.eraseRect(self.rect_for_draw)
-            self.update()
-            self.main_pix.setPixmap(self.pixmap)
-            self.history.add(self.pixmap.copy())
+    # Brush events.
 
-    def saveFileDialog(self):
-        options = QtWidgets.QFileDialog.Options()
-        options |= QtWidgets.QFileDialog.DontUseNativeDialog
-        fileName, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Сохранить файл",
-                                                            "",
-                                                            self.file_extensions,
-                                                            options=options)
-        if fileName:
-            self.pixmap.save(fileName)
+    def brush_mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.image.setCursor(self.DrawCursor)
+            self.lastPoint = self.image.mapFromGlobal(QCursor.pos())
+            self.brush_mouseMoveEvent(event)
 
-    def showPopupDialog(self, icon):
-        message = QtWidgets.QMessageBox()
-        message.setWindowTitle('Ошибка!')
-        message.setText('Неверный формат файла.')
-        message.setIcon(icon)
+    def brush_mouseMoveEvent(self, event):
+        qp = QPainter(self.image.pixmap())
+        qp.setPen(QPen(QColor(self.give_color[self.active_color]),
+                             self.tool_size, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
 
-        x = message.exec_()
+        qp.drawLine(self.lastPoint, self.image.mapFromGlobal(QCursor.pos()))
+        self.lastPoint = self.image.mapFromGlobal(QCursor.pos())
+        self.update()
+
+    def brush_mouseReleaseEvent(self, event):
+        self.pixmap = self.image.pixmap().copy()
+        self.lastPoint = QtCore.QPoint()
+
+    # Pencil events.
+
+    def pencil_mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.image.setCursor(self.DrawCursor)
+            self.lastPoint = self.image.mapFromGlobal(QCursor.pos())
+            self.brush_mouseMoveEvent(event)
+
+    def pencil_mouseMoveEvent(self, event):
+        qp = QPainter(self.image.pixmap())
+        qp.setPen(QPen(QColor(self.give_color[self.active_color]),
+                             1, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+
+        qp.drawLine(self.lastPoint, self.image.mapFromGlobal(QCursor.pos()))
+        self.lastPoint = self.image.mapFromGlobal(QCursor.pos())
+        self.update()
+
+    def pencil_mouseReleaseEvent(self, event):
+        self.pixmap = self.image.pixmap().copy()
+        self.lastPoint = QtCore.QPoint()
+
+    # Eraser events.
+
+    def eraser_mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.image.setCursor(self.DrawCursor)
+            self.lastPoint = self.image.mapFromGlobal(QCursor.pos())
+            self.eraser_mouseMoveEvent(event)
+
+    def eraser_mouseMoveEvent(self, event):
+        qp = QPainter(self.image.pixmap())
+        qp.setPen(QPen(QColor(255, 255, 255, 255), self.tool_size,
+                       Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+
+        qp.drawLine(self.lastPoint, self.image.mapFromGlobal(QCursor.pos()))
+        self.lastPoint = self.image.mapFromGlobal(QCursor.pos())
+        self.update()
+
+    def eraser_mouseReleaseEvent(self, event):
+        self.pixmap = self.image.pixmap().copy()
+        self.lastPoint = QtCore.QPoint()
+
+    # Pipette events.
+
+    def pipette_mousePressEvent(self, event):
+        self.image.setCursor(self.PipetteCursor)
+        image = self.pixmap.toImage()
+        pixel = image.pixel(self.image.mapFromGlobal(QCursor.pos()))
+        color_of_pixel = QColor(pixel).name()
+        self.set_background_btn_color(color_of_pixel)
+
+    def pipette_mouseMoveEvent(self, event):
+        self.image.setCursor(self.DrawCursor)
+        self.pipette_mousePressEvent(event)
+
+    def pipette_mouseReleaseEvent(self, event):
+        self.pipette_mousePressEvent(event)
+
+    # Filling events.
+
+    def filling_mousePressEvent(self, event):
+        qp = QPainter(self.image.pixmap())
+        qp.setPen(QPen(QColor(self.give_color[self.active_color])))
+
+        image = self.pixmap.toImage()
+        im_width, im_height = image.width(), image.height()
+        print(self.image.mapFromGlobal(QCursor.pos()))
+        im_x = self.image.mapFromGlobal(QCursor.pos()).x()
+        im_y = self.image.mapFromGlobal(QCursor.pos()).y()
+
+        target_color = QColor(image.pixel(im_x, im_y)).getRgb()
+
+        colored_pixels = []
+        border_pixels = []
+
+        def paint_pixel(x, y):
+            nonlocal colored_pixels, border_pixels
+            for x1, y1 in \
+                    [(x + 1, y + 1), (x + 1, y), (x + 1, y - 1), (x - 1, y),
+                     (x - 1, y), (x - 1, y - 1), (x, y + 1), (x, y - 1)]:
+                if (x1, y1) not in colored_pixels:
+                    if x1 != -1 and x1 != im_width + 1 and \
+                            y1 != -1 and y1 != im_height + 1:
+                        if QColor(image.pixel(x1, y1)).getRgb() == target_color:
+                            colored_pixels.append((x1, y1))
+                            qp.drawPoint(QtCore.QPoint(x, y))
+                            paint_pixel(x1, y1)
+                        elif (x1, y1) not in border_pixels:
+                            border_pixels.append((x1, y1))
+
+        paint_pixel(im_x, im_y)
+
+        self.update()
+
+    def filling_mouseMoveEvent(self, event):
+        qp = QPainter(self.image.pixmap())
+        qp.setPen(QPen(QColor(self.give_color[self.active_color])))
+
+        image = self.pixmap.toImage()
+        im_width, im_height = image.width(), image.height()
+        im_x = self.image.mapFromGlobal(QCursor.pos()).x()
+        im_y = self.image.mapFromGlobal(QCursor.pos()).y()
+
+        target_color = QColor(image.pixel(im_x, im_y)).getRgb()
+
+        colored_pixels = []
+        border_pixels = []
+
+        def paint_pixel(x, y):
+            for x1, y1 in \
+                    [(x + 1, y + 1), (x + 1, y), (x + 1, y - 1), (x - 1, y),
+                     (x - 1, y), (x - 1, y - 1), (x, y + 1), (x, y - 1)]:
+                if (x1, y1) not in colored_pixels:
+                    if x1 != -1 and x1 != im_width + 1 and \
+                            y1 != -1 and y1 != im_height + 1:
+                        if QColor(image.pixel(x1, y1)).getRgb() == target_color:
+                            colored_pixels.append((x1, y1))
+                            qp.drawPoint(QtCore.QPoint(x, y))
+                            paint_pixel(x1, y1)
+                        elif (x1, y1) not in border_pixels:
+                            border_pixels.append((x1, y1))
+
+        self.update()
+
+    def filling_mouseReleaseEvent(self, event):
+        pass
+
+    # Text events.
+
+    def text_mousePressEvent(self, event):
+        pass
+
+    def text_mouseMoveEvent(self, event):
+        pass
+
+    def text_mouseReleaseEvent(self, event):
+        pass
+
+    # make form for drawForm_mouseMoveEvents
+
+    def drawForm_mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.image.setCursor(QtCore.Qt.CrossCursor)
+            self.firstPoint = self.image.mapFromGlobal(QCursor.pos())
+            self.lastPoint = self.image.mapFromGlobal(QCursor.pos()) - self.firstPoint
+
+    def drawForm_mouseMoveEvent(self, event, qp, pen=MAKE_FORM_PEN):
+        self.lastPoint = self.image.mapFromGlobal(QCursor.pos()) - self.firstPoint
+        qp.setCompositionMode(QPainter.RasterOp_SourceXorDestination)
+        qp.setPen(pen)
+        qp.pen().setDashOffset(1)
+        self.rect_for_draw = QtCore.QRect(self.firstPoint.x(), self.firstPoint.y(),
+                                          self.lastPoint.x(), self.lastPoint.y())
+
+        if self.active_tool == 'drawRoundedRect':
+            getattr(qp, self.active_tool)(self.rect_for_draw, 10, 10, QtCore.Qt.RelativeSize)
+        else:
+            getattr(qp, self.active_tool)(self.rect_for_draw)
+        self.update()
+
+    def drawForm_mouseReleaseEvent(self, event):
+        qp = QPainter(self.pixmap)
+        qp.setPen(self.regulary_pen())
+        self.rect_for_draw = QtCore.QRect(self.firstPoint.x(), self.firstPoint.y(),
+                                          self.lastPoint.x(), self.lastPoint.y())
+        if self.active_tool == 'drawRoundedRect':
+            getattr(qp, self.active_tool)(self.rect_for_draw, 10, 10)
+        else:
+            getattr(qp, self.active_tool)(self.rect_for_draw)
+
+        self.update()
+        self.image.setPixmap(self.pixmap)
+
+    # DrawLine events.
+
+    def drawLine_mousePressEvent(self, event):
+        pass
+
+    def drawLine_mouseMoveEvent(self, event):
+        pass
+
+    def drawLine_mouseReleaseEvent(self, event):
+        pass
+
+    # DrawCurveLine events.
+
+    def drawCurveLine_mousePressEvent(self, event):
+        pass
+
+    def drawCurveLine_mouseMoveEvent(self, event):
+        pass
+
+    def drawCurveLine_mouseReleaseEvent(self, event):
+        pass
+
+    # DrawEllipse events.
+
+    def drawEllipse_mousePressEvent(self, event):
+        self.drawForm_mousePressEvent(event)
+
+    def drawEllipse_mouseMoveEvent(self, event):
+        self.image.setPixmap(self.pixmap.copy())
+        qp = QPainter(self.image.pixmap())
+        self.drawForm_mouseMoveEvent(event, qp)
+
+    def drawEllipse_mouseReleaseEvent(self, event):
+        self.drawForm_mouseReleaseEvent(event)
+
+    # DrawRectangle events.
+
+    def drawRect_mousePressEvent(self, event):
+        self.drawForm_mousePressEvent(event)
+
+    def drawRect_mouseMoveEvent(self, event):
+        self.image.setPixmap(self.pixmap.copy())
+        qp = QPainter(self.image.pixmap())
+        self.drawForm_mouseMoveEvent(event, qp)
+
+    def drawRect_mouseReleaseEvent(self, event):
+        self.drawForm_mouseReleaseEvent(event)
+
+    # DrawRoundedRectangle events.
+
+    def drawRoundedRect_mousePressEvent(self, event):
+        self.drawForm_mousePressEvent(event)
+
+    def drawRoundedRect_mouseMoveEvent(self, event):
+        self.image.setPixmap(self.pixmap.copy())
+        qp = QPainter(self.image.pixmap())
+        self.drawForm_mouseMoveEvent(event, qp)
+
+    def drawRoundedRect_mouseReleaseEvent(self, event):
+        self.drawForm_mouseReleaseEvent(event)
+
+    # DrawArbitraryFigure events.
+
+    def drawArbitraryFigure_mousePressEvent(self, event):
+        pass
+
+    def drawArbitraryFigure_mouseMoveEvent(self, event):
+        pass
+
+    def drawArbitraryFigure_mouseReleaseEvent(self, event):
+        pass
+
+    def regulary_pen(self):
+        return QPen(
+            QColor(self.give_color[self.active_color]), self.tool_size,
+            QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.MiterJoin)
+
+
+class InfoForm(QWidget):
+    def __init__(self, *args):
+        super().__init__()
+        self.setGeometry(300, 150, 300, 350)
+        self.setFixedSize(self.width(), self.height())
+        self.setWindowTitle('PyPaint: info')
+
+        self.label_im = QLabel(self)
+        self.label_im.setGeometry(20, 20, 260, 260)
+        pixmap = QPixmap('icons/main_icon.png')
+        pixmap = pixmap.scaled(260, 260)
+        self.label_im.setPixmap(pixmap)
+
+        self.plainTextEdit = QTextBrowser(self)
+        self.plainTextEdit.setGeometry(20 * 3, 290, 260, 50)
+        self.plainTextEdit.setText('     Версия 1.0')
+        self.plainTextEdit.setStyleSheet('border: none; background: #F0F0F0;')
+
+        HTML = ""
+        for i in self.plainTextEdit.toPlainText():
+            color = "#{:06x}".format(random.randrange(0, 0xFFFFFF))
+            HTML += "<font color='{}' size = {} >{}</font>".format(color, random.randrange(5, 8), i)
+        self.plainTextEdit.setHtml(HTML)
+
+
+def except_hook(cls, exception, traceback):
+    sys.__excepthook__(cls, exception, traceback)
 
 
 if __name__ == '__main__':
-    print(type(inspect.signature(ImageFilter.UnsharpMask)))
     app = QApplication(sys.argv)
-    ex = Paint()
-    ex.show()
+    form = MainWindow()
+    form.show()
     sys.excepthook = except_hook
     sys.exit(app.exec())
