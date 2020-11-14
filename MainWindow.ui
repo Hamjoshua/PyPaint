@@ -229,12 +229,6 @@
           </item>
           <item>
            <widget class="QLabel" name="info_label">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
             <property name="text">
              <string/>
             </property>
@@ -345,7 +339,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton">
+           <widget class="QPushButton" name="select">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
               <horstretch>0</horstretch>
@@ -359,7 +353,7 @@
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">QPushButton:pressed {	
+             <string notr="true">QPushButton:checked {	
 	background-color: rgb(85, 170, 255);
 	border-left: 28px solid rgb(85, 170, 255);
 	border: none;
@@ -373,6 +367,12 @@ QPushButton{border: 1px solid#E1E5ED;}</string>
             <property name="icon">
              <iconset>
               <normaloff>icons/operations_icons/tools_for_image_icons/selection_rectangle_icon.png</normaloff>icons/operations_icons/tools_for_image_icons/selection_rectangle_icon.png</iconset>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -422,7 +422,7 @@ QPushButton{border: 1px solid#E1E5ED;}</string>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="cancel_selection_btn">
+              <widget class="QPushButton" name="clean_selection_btn">
                <property name="maximumSize">
                 <size>
                  <width>70</width>
@@ -437,7 +437,7 @@ QPushButton{border: 1px solid#E1E5ED;}</string>
 }</string>
                </property>
                <property name="text">
-                <string>Отменить</string>
+                <string>Очистить</string>
                </property>
                <property name="icon">
                 <iconset>
@@ -838,6 +838,9 @@ QPushButton{border: 1px solid#E1E5ED;}</string>
 editable {
      border:1px solid#E1E5ED;
  }</string>
+                    </property>
+                    <property name="editable">
+                     <bool>false</bool>
                     </property>
                     <property name="currentText">
                      <string>Arial</string>
@@ -1252,7 +1255,7 @@ editable {
               </widget>
              </item>
              <item row="1" column="2">
-              <widget class="QPushButton" name="drawArbitraryFigure">
+              <widget class="QPushButton" name="drawPolygon">
                <property name="maximumSize">
                 <size>
                  <width>20</width>
@@ -1417,7 +1420,7 @@ editable {
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>icons/operations_icons/change_color_icons/reverse_main_colors_icon.png</normaloff>icons/operations_icons/change_color_icons/reverse_main_colors_icon.png</iconset>
+            <normaloff>../../../User/Documents/GitHub/PyPaint/icons/operations_icons/change_color_icons/reverse_main_colors_icon.png</normaloff>../../../User/Documents/GitHub/PyPaint/icons/operations_icons/change_color_icons/reverse_main_colors_icon.png</iconset>
           </property>
           <property name="flat">
            <bool>true</bool>
@@ -1450,7 +1453,7 @@ editable {
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>icons/operations_icons/change_color_icons/restart_main_color_icon.png</normaloff>icons/operations_icons/change_color_icons/restart_main_color_icon.png</iconset>
+            <normaloff>../../../User/Documents/GitHub/PyPaint/icons/operations_icons/change_color_icons/restart_main_color_icon.png</normaloff>../../../User/Documents/GitHub/PyPaint/icons/operations_icons/change_color_icons/restart_main_color_icon.png</iconset>
           </property>
           <property name="flat">
            <bool>true</bool>
@@ -1518,6 +1521,18 @@ QPushButton{
           </property>
           <property name="text">
            <string/>
+          </property>
+          <property name="checkable">
+           <bool>false</bool>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+          <property name="default">
+           <bool>false</bool>
+          </property>
+          <property name="flat">
+           <bool>false</bool>
           </property>
          </widget>
          <widget class="QPushButton" name="change_color_btn">
@@ -2143,17 +2158,68 @@ background: #A349A3;}</string>
         </widget>
        </item>
        <item>
-        <spacer name="horizontalSpacer_1">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="1" column="0">
+          <widget class="QPushButton" name="add_layer_btn">
+           <property name="styleSheet">
+            <string notr="true">QPushButton:pressed {	
+	background-color: rgb(85, 170, 255);
+	border-left: 28px solid rgb(85, 170, 255);
+	border: none;
+}
+
+QPushButton{
+	color: #000000;
+	border: 1px solid#A0A0A0;
+}</string>
+           </property>
+           <property name="text">
+            <string>Добавить Слой</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QPushButton" name="del_layer_btn">
+           <property name="styleSheet">
+            <string notr="true">QPushButton:pressed {	
+	background-color: rgb(85, 170, 255);
+	border-left: 28px solid rgb(85, 170, 255);
+	border: none;
+}
+
+QPushButton{
+	color: #000000;
+	border: 1px solid#A0A0A0;
+}</string>
+           </property>
+           <property name="text">
+            <string>Удалить слой</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0" colspan="2">
+          <widget class="QListWidget" name="listWidget">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="dragEnabled">
+            <bool>false</bool>
+           </property>
+           <property name="dragDropOverwriteMode">
+            <bool>true</bool>
+           </property>
+           <property name="dragDropMode">
+            <enum>QAbstractItemView::DragDrop</enum>
+           </property>
+           <property name="defaultDropAction">
+            <enum>Qt::MoveAction</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
