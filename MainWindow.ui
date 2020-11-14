@@ -229,6 +229,12 @@
           </item>
           <item>
            <widget class="QLabel" name="info_label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -1411,7 +1417,7 @@ editable {
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../../../User/Documents/GitHub/PyPaint/icons/operations_icons/change_color_icons/reverse_main_colors_icon.png</normaloff>../../../User/Documents/GitHub/PyPaint/icons/operations_icons/change_color_icons/reverse_main_colors_icon.png</iconset>
+            <normaloff>icons/operations_icons/change_color_icons/reverse_main_colors_icon.png</normaloff>icons/operations_icons/change_color_icons/reverse_main_colors_icon.png</iconset>
           </property>
           <property name="flat">
            <bool>true</bool>
@@ -1444,7 +1450,7 @@ editable {
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../../../User/Documents/GitHub/PyPaint/icons/operations_icons/change_color_icons/restart_main_color_icon.png</normaloff>../../../User/Documents/GitHub/PyPaint/icons/operations_icons/change_color_icons/restart_main_color_icon.png</iconset>
+            <normaloff>icons/operations_icons/change_color_icons/restart_main_color_icon.png</normaloff>icons/operations_icons/change_color_icons/restart_main_color_icon.png</iconset>
           </property>
           <property name="flat">
            <bool>true</bool>

@@ -1,13 +1,13 @@
 import sys
-import random
+from random import randrange
 
-from PyQt5 import QtCore
 from PyQt5.QtGui import *
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QButtonGroup, \
-    QInputDialog, QMessageBox, QFileDialog, QLabel, QColorDialog, QWidget, QTextBrowser
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget
+from PyQt5.QtWidgets import QButtonGroup, QLabel, QTextBrowser
+from PyQt5.QtWidgets import QInputDialog, QFileDialog, QColorDialog, QMessageBox
 
-from PyQt5 import uic  # Импортируем uic
+from PyQt5 import uic
 
 SELECTION_PEN = QPen(QColor(0xff, 0xff, 0xff), 1, QtCore.Qt.DashLine)
 MAKE_FORM_PEN = QPen(QColor(0xff, 0xff, 0xff), 1, QtCore.Qt.SolidLine)
@@ -21,24 +21,25 @@ COLORS = ['#000000', '#880016', '#ED1B24', '#FF7F26',
 DEFAULT_COLORS = ['#000000', '#FFFFFF']
 
 
-class MainWindow(QMainWindow):  # , Ui_Form
+class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         uic.loadUi('MainWindow.ui', self)
         self.setWindowTitle('PyPaint')
-        self.setWindowIcon(QIcon('icons/main_icon.ico'))
+        self.setWindowIcon(QIcon('icons/main_icon.png'))
+
         self.tools_group = QButtonGroup(self)
         self.connecting_buttons()
 
-        # tools settings
+        # Tools settings
+        self.active_color = self.main_color_btn_1
+        self.get_main_color = \
+            {self.main_color_btn_1: DEFAULT_COLORS[0],
+             self.main_color_btn_2: DEFAULT_COLORS[1]}
         self.font = QFont(self.fontComboBox.currentText())
-        self.tool_size = self.change_size_spinBox.value()
         self.text_size = 12
 
-        self.active_color = self.main_color_btn_1
-        self.give_color = {self.main_color_btn_1: DEFAULT_COLORS[0],
-                           self.main_color_btn_2: DEFAULT_COLORS[1]}
-
+        self.tool_size = self.change_size_spinBox.value()
         self.active_tool = None
         self.brush.click()
 
@@ -53,14 +54,12 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.pixmap = QPixmap(800, 600)
         self.pixmap.fill(QColor('#FFFFFF'))
         self.temp_pixmap = self.pixmap.copy()
-        self.currect_file_name = False
+        self.current_file_name = False
         self.image.setPixmap(self.pixmap)
         self.update_image_by_window_size()
 
-        self.x_pos_image, self.y_pos_image = None, None
-
-        self.firstPoint = QtCore.QPoint()  # первая точка
         self.lastPoint = QtCore.QPoint()  # прошлая точка
+        self.firstPoint = QtCore.QPoint()  # первая точка
 
         self.DrawCursor = QCursor(QPixmap('cursors/draw.png'), 0, 0)
         self.PipetteCursor = QCursor(QPixmap('cursors/pipette.png'), 0, 0)
@@ -78,9 +77,9 @@ class MainWindow(QMainWindow):  # , Ui_Form
         # Init triggers for buttons in image_menu
         self.flip_gorizontally_btn.triggered.connect(self.flip_gorizontally_image)
         self.flip_vertically_btn.triggered.connect(self.flip_vertically_image)
-        self.turn_90_right_btn.triggered.connect(self.turn_90_right_image)
-        self.turn_90_left_btn.triggered.connect(self.turn_90_left_image)
-        self.turn_180_btn.triggered.connect(self.turn_180_image)
+        self.turn_90_right_btn.triggered.connect(lambda: self.turn_image(90))
+        self.turn_90_left_btn.triggered.connect(lambda: self.turn_image(270))
+        self.turn_180_btn.triggered.connect(lambda: self.turn_image(180))
 
         # Init triggers for buttons in info_menu
         self.info_btn.triggered.connect(self.show_info_form)
@@ -131,9 +130,9 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
         try:
             if ok_pressed:
-                self.pixmap = QtGui.QPixmap(*list(map(int, item.split('*'))))
-                self.pixmap.fill(QtGui.QColor('#FFFFFF'))
-                self.currect_file_name = False
+                self.pixmap = QPixmap(*map(int, item.split('*')))
+                self.pixmap.fill(QColor('#FFFFFF'))
+                self.current_file_name = False
                 self.image.setPixmap(self.pixmap)
                 self.update_image_by_window_size()
         except ValueError:
@@ -147,7 +146,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
         if fname:
             self.pixmap = QtGui.QPixmap(fname)
-            self.currect_file_name = fname
+            self.current_file_name = fname
             self.image.setPixmap(self.pixmap)
             self.update_image_by_window_size()
 
@@ -161,7 +160,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
         fname, _ = QFileDialog.getSaveFileName(
             self, "Сохранить файл", "", self.file_extensions)
         if fname:
-            self.currect_file_name = fname
+            self.current_file_name = fname
             self.pixmap.save(fname)
 
     # Image events
@@ -192,7 +191,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
                         (main_image_widget_height - image_height) // 2)
         self.image.setPixmap(self.pixmap)
 
-    # to change image
+    # To change image
 
     def flip_gorizontally_image(self):
         self.pixmap = self.pixmap.transformed(QTransform().scale(1, -1))
@@ -204,23 +203,15 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.image.setPixmap(self.pixmap)
         self.update_image_by_window_size()
 
-    def turn_90_right_image(self):
-        self.pixmap = self.pixmap.transformed(QTransform().rotate(90))
+    def turn_image(self, rotate):
+        self.pixmap = self.pixmap.transformed(QTransform().rotate(rotate))
         self.image.setPixmap(self.pixmap)
         self.update_image_by_window_size()
 
-    def turn_90_left_image(self):
-        self.pixmap = self.pixmap.transformed(QTransform().rotate(270))
-        self.image.setPixmap(self.pixmap)
-        self.update_image_by_window_size()
-
-    def turn_180_image(self):
-        self.pixmap = self.pixmap.transformed(QTransform().rotate(180))
-        self.image.setPixmap(self.pixmap)
-        self.update_image_by_window_size()
+    # Show form
 
     def show_info_form(self):
-        self.second_form = InfoForm(self)
+        self.second_form = InfoForm()
         self.second_form.show()
 
     # Change
@@ -233,7 +224,6 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def change_tool(self, button):
         self.active_tool = button.objectName()
-
         if self.active_tool == self.text.objectName():
             self.change_size_spinBox.setValue(self.text_size)
         else:
@@ -246,42 +236,37 @@ class MainWindow(QMainWindow):  # , Ui_Form
         else:
             self.tool_size = self.change_size_spinBox.value()
 
+    # Color buttons events.
+
     def change_active_color(self):
         self.active_color = self.sender()
 
-    # Color buttons events.
+    def set_background_btn_color(self, color, btn=False):
+        btn = btn if btn else self.active_color
+        btn.setStyleSheet(
+            'QPushButton:pressed {background-color: rgb(85, 170, 255);' +
+            'border-left: 28px solid rgb(85, 170, 255);border: none;}' +
+            'QPushButton{border:1px solid #A0A0A0;' +
+            f'background: {color}' + ';}')
+        self.get_main_color[btn] = color
+
+    def openColorDialog(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self.set_background_btn_color(color.name())
 
     def change_color(self):
         obj_name = self.sender().objectName()
         color = COLORS[int(obj_name[obj_name.rfind("_") + 1:])]
         self.set_background_btn_color(color)
 
-    def set_background_btn_color(self, color, btn=False):
-        if not btn:
-            btn = self.active_color
-        btn.setStyleSheet(
-            'QPushButton:pressed {background-color: rgb(85, 170, 255);' +
-            'border-left: 28px solid rgb(85, 170, 255);border: none;}' +
-            'QPushButton{border:1px solid #A0A0A0;' +
-            f'background: {color}' + ';}')
-        self.give_color[self.active_color] = QColor(color)
-
-    def openColorDialog(self):
-        color = QColorDialog.getColor()
-        if color.isValid():
-            self.set_background_btn_color(f'rgb{color.getRgb()}')
-
     def reverse_colors_btn(self):
-        first_color_key, second_color_key = self.give_color.keys()
-        self.give_color[first_color_key], self.give_color[second_color_key] = \
-            self.give_color[second_color_key], self.give_color[first_color_key]
-        self.set_background_btn_color(self.give_color[first_color_key], btn=self.main_color_btn_1)
-        self.set_background_btn_color(self.give_color[second_color_key], btn=self.main_color_btn_2)
+        first_color = self.get_main_color[self.main_color_btn_1]
+        second_color = self.get_main_color[self.main_color_btn_2]
+        self.set_background_btn_color(second_color, btn=self.main_color_btn_1)
+        self.set_background_btn_color(first_color, btn=self.main_color_btn_2)
 
     def restart_colors_btn(self):
-        first_color_key, second_color_key = self.give_color.keys()
-        self.give_color[first_color_key], self.give_color[second_color_key] = \
-            self.give_color[second_color_key], self.give_color[first_color_key]
         self.set_background_btn_color(DEFAULT_COLORS[0], btn=self.main_color_btn_1)
         self.set_background_btn_color(DEFAULT_COLORS[1], btn=self.main_color_btn_2)
 
@@ -345,8 +330,8 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def brush_mouseMoveEvent(self, event):
         qp = QPainter(self.image.pixmap())
-        qp.setPen(QPen(QColor(self.give_color[self.active_color]),
-                             self.tool_size, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        qp.setPen(QPen(QColor(self.get_main_color[self.active_color]), self.tool_size,
+                       QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin))
 
         qp.drawLine(self.lastPoint, self.image.mapFromGlobal(QCursor.pos()))
         self.lastPoint = self.image.mapFromGlobal(QCursor.pos())
@@ -366,8 +351,8 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def pencil_mouseMoveEvent(self, event):
         qp = QPainter(self.image.pixmap())
-        qp.setPen(QPen(QColor(self.give_color[self.active_color]),
-                             1, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        qp.setPen(QPen(QColor(self.get_main_color[self.active_color]), 1,
+                       QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin))
 
         qp.drawLine(self.lastPoint, self.image.mapFromGlobal(QCursor.pos()))
         self.lastPoint = self.image.mapFromGlobal(QCursor.pos())
@@ -388,7 +373,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
     def eraser_mouseMoveEvent(self, event):
         qp = QPainter(self.image.pixmap())
         qp.setPen(QPen(QColor(255, 255, 255, 255), self.tool_size,
-                       Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+                       QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin))
 
         qp.drawLine(self.lastPoint, self.image.mapFromGlobal(QCursor.pos()))
         self.lastPoint = self.image.mapFromGlobal(QCursor.pos())
@@ -418,67 +403,35 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def filling_mousePressEvent(self, event):
         qp = QPainter(self.image.pixmap())
-        qp.setPen(QPen(QColor(self.give_color[self.active_color])))
+        qp.setPen(QPen(QColor(self.get_main_color[self.active_color])))
 
-        image = self.pixmap.toImage()
-        im_width, im_height = image.width(), image.height()
-        print(self.image.mapFromGlobal(QCursor.pos()))
-        im_x = self.image.mapFromGlobal(QCursor.pos()).x()
-        im_y = self.image.mapFromGlobal(QCursor.pos()).y()
+        im = self.pixmap.toImage()
+        im_width, im_height = im.width(), im.height()
+        im_cords = self.image.mapFromGlobal(QCursor.pos())
+        im_x, im_y = im_cords.x(), im_cords.y()
 
-        target_color = QColor(image.pixel(im_x, im_y)).getRgb()
+        colored_pix = set()
+        pix_queue = set()
+        pix_queue.add((im_x, im_y))
 
-        colored_pixels = []
-        border_pixels = []
+        def add_queue_points(x, y):
+            for x1, y1 in ((x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)):
+                if 0 <= x1 <= im_width and 0 <= y1 <= im_height and (x1, y1) not in colored_pix:
+                    pix_queue.add((x1, y1))
+                    colored_pix.add((x1, y1))
 
-        def paint_pixel(x, y):
-            nonlocal colored_pixels, border_pixels
-            for x1, y1 in \
-                    [(x + 1, y + 1), (x + 1, y), (x + 1, y - 1), (x - 1, y),
-                     (x - 1, y), (x - 1, y - 1), (x, y + 1), (x, y - 1)]:
-                if (x1, y1) not in colored_pixels:
-                    if x1 != -1 and x1 != im_width + 1 and \
-                            y1 != -1 and y1 != im_height + 1:
-                        if QColor(image.pixel(x1, y1)).getRgb() == target_color:
-                            colored_pixels.append((x1, y1))
-                            qp.drawPoint(QtCore.QPoint(x, y))
-                            paint_pixel(x1, y1)
-                        elif (x1, y1) not in border_pixels:
-                            border_pixels.append((x1, y1))
-
-        paint_pixel(im_x, im_y)
+        repaint_color = im.pixel(im_x, im_y)
+        while pix_queue:
+            pix_x, pix_y = pix_queue.pop()
+            if im.pixel(pix_x, pix_y) == repaint_color:
+                qp.drawPoint(QtCore.QPoint(pix_x, pix_y))
+                add_queue_points(pix_x, pix_y)
 
         self.update()
+        self.filling_mouseMoveEvent(event)
 
     def filling_mouseMoveEvent(self, event):
-        qp = QPainter(self.image.pixmap())
-        qp.setPen(QPen(QColor(self.give_color[self.active_color])))
-
-        image = self.pixmap.toImage()
-        im_width, im_height = image.width(), image.height()
-        im_x = self.image.mapFromGlobal(QCursor.pos()).x()
-        im_y = self.image.mapFromGlobal(QCursor.pos()).y()
-
-        target_color = QColor(image.pixel(im_x, im_y)).getRgb()
-
-        colored_pixels = []
-        border_pixels = []
-
-        def paint_pixel(x, y):
-            for x1, y1 in \
-                    [(x + 1, y + 1), (x + 1, y), (x + 1, y - 1), (x - 1, y),
-                     (x - 1, y), (x - 1, y - 1), (x, y + 1), (x, y - 1)]:
-                if (x1, y1) not in colored_pixels:
-                    if x1 != -1 and x1 != im_width + 1 and \
-                            y1 != -1 and y1 != im_height + 1:
-                        if QColor(image.pixel(x1, y1)).getRgb() == target_color:
-                            colored_pixels.append((x1, y1))
-                            qp.drawPoint(QtCore.QPoint(x, y))
-                            paint_pixel(x1, y1)
-                        elif (x1, y1) not in border_pixels:
-                            border_pixels.append((x1, y1))
-
-        self.update()
+        self.pixmap = self.image.pixmap().copy()
 
     def filling_mouseReleaseEvent(self, event):
         pass
@@ -603,12 +556,12 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def regulary_pen(self):
         return QPen(
-            QColor(self.give_color[self.active_color]), self.tool_size,
+            QColor(self.get_main_color[self.active_color]), self.tool_size,
             QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.MiterJoin)
 
 
 class InfoForm(QWidget):
-    def __init__(self, *args):
+    def __init__(self):
         super().__init__()
         self.setGeometry(300, 150, 300, 350)
         self.setFixedSize(self.width(), self.height())
@@ -627,8 +580,8 @@ class InfoForm(QWidget):
 
         HTML = ""
         for i in self.plainTextEdit.toPlainText():
-            color = "#{:06x}".format(random.randrange(0, 0xFFFFFF))
-            HTML += "<font color='{}' size = {} >{}</font>".format(color, random.randrange(5, 8), i)
+            color = "#{:06x}".format(randrange(0, 0xFFFFFF))
+            HTML += "<font color='{}' size = {} >{}</font>".format(color, randrange(5, 8), i)
         self.plainTextEdit.setHtml(HTML)
 
 
