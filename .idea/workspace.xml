@@ -21,19 +21,6 @@
   <component name="ChangeListManager">
     <list default="true" id="91fa5ada-3a11-4463-a4d1-0e98d917844e" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MainWindow.ui" beforeDir="false" afterPath="$PROJECT_DIR$/MainWindow.ui" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cursors/brush.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cursors/cadre.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cursors/draw.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cursors/ellipse.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cursors/eraser.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cursors/filling.png" beforeDir="false" afterPath="$PROJECT_DIR$/cursors/filling.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cursors/pencil.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cursors/pipette.png" beforeDir="false" afterPath="$PROJECT_DIR$/cursors/pipette.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cursors/polygon.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cursors/rect.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cursors/rounded.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cursors/text.png" beforeDir="false" afterPath="$PROJECT_DIR$/cursors/text.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -130,22 +117,22 @@
       <screen x="0" y="0" width="1366" height="722" />
     </state>
     <state x="463" y="116" key="FileChooserDialogImpl/0.0.1366.722@0.0.1366.722" timestamp="1605327772836" />
-    <state width="1345" height="66" key="GridCell.Tab.0.bottom" timestamp="1605423123458">
+    <state width="1345" height="19" key="GridCell.Tab.0.bottom" timestamp="1605426953500">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="66" key="GridCell.Tab.0.bottom/0.0.1366.722@0.0.1366.722" timestamp="1605423123458" />
-    <state width="1345" height="66" key="GridCell.Tab.0.center" timestamp="1605423123457">
+    <state width="1345" height="19" key="GridCell.Tab.0.bottom/0.0.1366.722@0.0.1366.722" timestamp="1605426953500" />
+    <state width="1345" height="19" key="GridCell.Tab.0.center" timestamp="1605426953500">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="66" key="GridCell.Tab.0.center/0.0.1366.722@0.0.1366.722" timestamp="1605423123457" />
-    <state width="1345" height="66" key="GridCell.Tab.0.left" timestamp="1605423123457">
+    <state width="1345" height="19" key="GridCell.Tab.0.center/0.0.1366.722@0.0.1366.722" timestamp="1605426953500" />
+    <state width="1345" height="19" key="GridCell.Tab.0.left" timestamp="1605426953500">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="66" key="GridCell.Tab.0.left/0.0.1366.722@0.0.1366.722" timestamp="1605423123457" />
-    <state width="1345" height="66" key="GridCell.Tab.0.right" timestamp="1605423123457">
+    <state width="1345" height="19" key="GridCell.Tab.0.left/0.0.1366.722@0.0.1366.722" timestamp="1605426953500" />
+    <state width="1345" height="19" key="GridCell.Tab.0.right" timestamp="1605426953500">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="66" key="GridCell.Tab.0.right/0.0.1366.722@0.0.1366.722" timestamp="1605423123457" />
+    <state width="1345" height="19" key="GridCell.Tab.0.right/0.0.1366.722@0.0.1366.722" timestamp="1605426953500" />
     <state width="1345" height="220" key="GridCell.Tab.1.bottom" timestamp="1605339104447">
       <screen x="0" y="0" width="1366" height="722" />
     </state>

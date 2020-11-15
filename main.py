@@ -398,7 +398,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
         color = QColorDialog.getColor()
         if color.isValid():
             self.set_background_btn_color(color.name())
-            self.get_main_color[self.active_color] = QColor(color)
+            self.get_main_color[self.active_color] = color.name()
 
     def reverse_colors_btn(self):
         first_color = self.get_main_color[self.main_color_btn_1]
@@ -424,7 +424,6 @@ class MainWindow(QMainWindow):  # , Ui_Form
             self.update_current_layer(self.priority)
 
     def mouseMoveEvent(self, event):
-        print('Yes')
         operation = getattr(self, '%s_mouseMoveEvent' % self.active_tool, None)
         if operation:
             operation(event)
@@ -448,7 +447,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
                     qp.setPen(self.regularly_pen)
                 else:
                     pen = self.regularly_pen
-                    pen.setColor(self.get_main_color[self.main_color_btn_2])
+                    pen.setColor(QColor(self.get_main_color[self.main_color_btn_2]))
                     qp.setPen(pen)
                 if self.choose_filling_figure_checkBox.checkState() == QtCore.Qt.Checked:
                     qp.setBrush(QColor(self.get_main_color[self.main_color_btn_2]))
@@ -593,7 +592,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
         else:
             self.current_text += event.text()
         qp = QPainter(self.current_pixmap)
-        qp.setPen(self.regularly_pen)
+        qp.setPen(QPen(QColor(self.get_main_color[self.active_color])))
         qp.setFont(self.font)
         qp.drawText(self.firstPoint, self.current_text)
         # TODO хочу реализовать текст через создание квадрата, а потом написание текста, который будет расположен внутри
@@ -618,11 +617,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
                                           self.lastPoint.x(), self.lastPoint.y())
 
         if self.active_tool == 'drawRoundedRect':
-            point_1_x, point_1_y = self.firstPoint.x(), self.firstPoint.y()
-            point_2_x, point_2_y = self.lastPoint.x(), self.lastPoint.y()
-            print(point_1_x, point_1_y, point_2_x, point_2_y)
-            getattr(qp, self.active_tool)(QtCore.QRect(point_1_x, point_1_y, point_2_x, point_2_y),
-                                          10, 10, QtCore.Qt.RelativeSize)
+            getattr(qp, self.active_tool)(self.rect_for_draw, 10, 10, QtCore.Qt.RelativeSize)
         else:
             if self.active_tool == 'drawPolygon':
                 qp.drawPolygon(*self.polygon_points)
@@ -632,11 +627,13 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def drawForm_mouseReleaseEvent(self, event):
         qp = QPainter(self.current_pixmap)
-        if self.choose_contour_figure_checkBox.checkState() == QtCore.Qt.Checked:
-            qp.setPen(self.regularly_pen)
+        if self.choose_contour_figure_checkBox.isChecked():
+            pen = self.regularly_pen
+            pen.setColor(QColor(self.get_main_color[self.main_color_btn_1]))
+            qp.setPen(pen)
         else:
             pen = self.regularly_pen
-            pen.setColor(self.get_main_color[self.main_color_btn_2])
+            pen.setColor(QColor(self.get_main_color[self.main_color_btn_2]))
             qp.setPen(pen)
         if self.choose_filling_figure_checkBox.checkState() == QtCore.Qt.Checked:
             qp.setBrush(QColor(self.get_main_color[self.main_color_btn_2]))
@@ -813,6 +810,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
             self.pixmap = getattr(self.pixmap, operation)(args)
             self.image.setPixmap(self.pixmap)
             self.show_layers([operation, args])
+            self.update_image_by_window_size()
 
 
 class InfoForm(QWidget):
