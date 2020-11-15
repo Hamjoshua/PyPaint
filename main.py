@@ -130,7 +130,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.open_btn.triggered.connect(self.openFileNameDialog)
         self.save_btn.triggered.connect(self.saveFileDialog)
         self.save_as_btn.triggered.connect(self.save_asFileDialog)
-        self.exit_btn.triggered.connect(exit)
+        self.exit_btn.triggered.connect(sys.exit)
 
         # Init triggers for buttons in image_menu
         self.flip_gorizontally_btn.triggered.connect(self.flip_gorizontally_image)
@@ -374,20 +374,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.show_layers(['transformed', QTransform().scale(1, -1)])
         self.image.setPixmap(self.pixmap)
-        # self.update_image_by_window_size()
 
     def flip_vertically_image(self):
         self.pixmap = self.pixmap.transformed(QTransform().scale(-1, 1))
 
         self.show_layers(['transformed', QTransform().scale(-1, 1)])
         self.image.setPixmap(self.pixmap)
-        # self.update_image_by_window_size()
 
     def turn_image(self, rotate):
         self.pixmap = self.pixmap.transformed(QTransform().rotate(rotate))
         self.show_layers(['transformed', QTransform().rotate(rotate)])
         self.image.setPixmap(self.pixmap)
-        # self.update_image_by_window_size()
 
     def show_info_form(self):
         self.second_form = InfoForm()
