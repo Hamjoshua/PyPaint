@@ -1057,7 +1057,7 @@ editable {
            </widget>
           </item>
           <item>
-           <widget class="QFrame" name="chose_figue_tool_frame">
+           <widget class="QFrame" name="chose_figure_tool_frame">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
               <horstretch>0</horstretch>
@@ -1420,7 +1420,7 @@ editable {
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../../../User/Documents/GitHub/PyPaint/icons/operations_icons/change_color_icons/reverse_main_colors_icon.png</normaloff>../../../User/Documents/GitHub/PyPaint/icons/operations_icons/change_color_icons/reverse_main_colors_icon.png</iconset>
+            <normaloff>icons/operations_icons/change_color_icons/reverse_main_colors_icon.png</normaloff>icons/operations_icons/change_color_icons/reverse_main_colors_icon.png</iconset>
           </property>
           <property name="flat">
            <bool>true</bool>
@@ -1453,7 +1453,7 @@ editable {
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../../../User/Documents/GitHub/PyPaint/icons/operations_icons/change_color_icons/restart_main_color_icon.png</normaloff>../../../User/Documents/GitHub/PyPaint/icons/operations_icons/change_color_icons/restart_main_color_icon.png</iconset>
+            <normaloff>icons/operations_icons/change_color_icons/restart_main_color_icon.png</normaloff>icons/operations_icons/change_color_icons/restart_main_color_icon.png</iconset>
           </property>
           <property name="flat">
            <bool>true</bool>
@@ -2158,6 +2158,19 @@ background: #A349A3;}</string>
         </widget>
        </item>
        <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
         <layout class="QGridLayout" name="gridLayout_4">
          <item row="1" column="0">
           <widget class="QPushButton" name="add_layer_btn">
@@ -2277,7 +2290,7 @@ stop:1 #C6CFE0);</string>
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>1140</width>
+              <width>1133</width>
               <height>516</height>
              </rect>
             </property>

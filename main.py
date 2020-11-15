@@ -1,15 +1,18 @@
 import sys
-import random
+import sqlite3
+import re
+from csv import DictReader
+from math import acos, sqrt, degrees
+from random import randrange
 
 from PyQt5 import QtCore
 from PyQt5.QtGui import *
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QButtonGroup, \
-    QInputDialog, QMessageBox, QFileDialog, QLabel, QColorDialog, QWidget, QTextBrowser, QListWidgetItem, QListWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget
+from PyQt5.QtWidgets import QButtonGroup, QLabel, QTextBrowser
+from PyQt5.QtWidgets import QInputDialog, QFileDialog, QColorDialog, \
+    QMessageBox, QListWidgetItem
 
-from PyQt5 import uic  # Импортируем uic
-import re
-from math import acos, sqrt, degrees
+from PyQt5 import uic
 
 SELECTION_PEN = QPen(QColor(0xff, 0xff, 0xff), 1, QtCore.Qt.DashLine)
 MAKE_FORM_PEN = QPen(QColor(0xff, 0xff, 0xff), 1, QtCore.Qt.SolidLine)
@@ -20,9 +23,9 @@ COLORS = ['#000000', '#880016', '#ED1B24', '#FF7F26',
           '#FFFFFF', '#C3C3C3', '#B97A57', '#FFC90D',
           '#EFE4AE', '#B5E51D', '#C7BFE6', '#A349A3']
 
-DEFAULT_COLORS = [QColor('#000000'), QColor('#FFFFFF')]
+DEFAULT_COLORS = ['#000000', '#FFFFFF']
 
-LAYERS_DICT = dict()
+LAYERS_DICT = dict()  # ???
 
 
 class MainWindow(QMainWindow):  # , Ui_Form
@@ -31,27 +34,30 @@ class MainWindow(QMainWindow):  # , Ui_Form
         uic.loadUi('MainWindow.ui', self)
         self.setWindowTitle('PyPaint')
         self.setWindowIcon(QIcon('icons/main_icon.ico'))
+
         self.tools_group = QButtonGroup(self)
         self.connecting_buttons()
 
-        # tools settings
+        # Tools settings
+        self.active_color = self.main_color_btn_1
+        self.get_main_color = \
+            {self.main_color_btn_1: DEFAULT_COLORS[0],
+             self.main_color_btn_2: DEFAULT_COLORS[1]}
+
         self.font = QFont(self.fontComboBox.currentText())
-        self.tool_size = self.change_size_spinBox.value()
+        self.current_text = ''
         self.text_size = 12
 
-        self.active_color = self.main_color_btn_1
-        self.give_color = {self.main_color_btn_1: DEFAULT_COLORS[0],
-                           self.main_color_btn_2: DEFAULT_COLORS[1]}
-
+        self.tool_size = self.change_size_spinBox.value()
         self.active_tool = None
-
-        # auxiliary variables
-        self.is_drawed_line_for_curve = False
-        self.polygon_points = []
-        self.rect_for_draw = QtCore.QRect()
 
         # Set brush active with the start project
         self.brush.click()
+
+        # Auxiliary variables
+        self.is_drawed_line_for_curve = False
+        self.polygon_points = []
+        self.rect_for_draw = QtCore.QRect()
 
         self.file_extensions = "All Files (*.png *.jpg);;JPG (*.jpg);;PNG (*.png)"
         self.default_sizes_of_created_image = \
@@ -63,19 +69,21 @@ class MainWindow(QMainWindow):  # , Ui_Form
         # Init default image
         self.pixmap = QPixmap(800, 600)
         self.pixmap.fill(QColor('#FFFFFF'))
+        self.current_pixmap = self.pixmap.copy()
         self.temp_pixmap = self.pixmap.copy()
-        self.currect_file_name = False
+        self.current_file_name = False
         self.image.setPixmap(self.pixmap)
+        self.add_layer(priority='Main')
         self.update_image_by_window_size()
         self.priority = None
 
-        self.x_pos_image, self.y_pos_image = None, None
+        # Active pen for tools
+        self.regularly_pen = QPen(
+            QColor(self.get_main_color[self.active_color]), self.tool_size,
+            QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.MiterJoin)
 
-        self.firstPoint = QtCore.QPoint()  # первая точка
-        self.lastPoint = QtCore.QPoint()  # прошлая точка
-
-        self.DrawCursor = QCursor(QPixmap('cursors/draw.png'), 0, 0)
-        self.PipetteCursor = QCursor(QPixmap('cursors/pipette.png'), 0, 0)
+        self.firstPoint = QtCore.QPoint()
+        self.lastPoint = QtCore.QPoint()
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.show_layers)
@@ -92,9 +100,9 @@ class MainWindow(QMainWindow):  # , Ui_Form
         # Init triggers for buttons in image_menu
         self.flip_gorizontally_btn.triggered.connect(self.flip_gorizontally_image)
         self.flip_vertically_btn.triggered.connect(self.flip_vertically_image)
-        self.turn_90_right_btn.triggered.connect(self.turn_90_right_image)
-        self.turn_90_left_btn.triggered.connect(self.turn_90_left_image)
-        self.turn_180_btn.triggered.connect(self.turn_180_image)
+        self.turn_90_right_btn.triggered.connect(lambda: self.turn_image(90))
+        self.turn_90_left_btn.triggered.connect(lambda: self.turn_image(270))
+        self.turn_180_btn.triggered.connect(lambda: self.turn_image(180))
 
         # Init triggers for buttons in info_menu
         self.info_btn.triggered.connect(self.show_info_form)
@@ -218,18 +226,20 @@ class MainWindow(QMainWindow):  # , Ui_Form
     def newFileDialog(self):
         item, ok_pressed = QInputDialog.getItem(
             self, "Создание",
-            "Введите размер изображения (weight * height)" +
+            "Введите размер изображения (weight * height)(МОЖЕТ БЫТЬ ИЗМЕНЁН!)" +
             "\nили выберите из предложенных:",
             self.default_sizes_of_created_image, 3, True)
 
         try:
             if ok_pressed:
-                self.pixmap = QPixmap(*list(map(int, item.split('*'))))
-                self.pixmap.fill(QColor('#FFFFFF'))
-                self.currect_file_name = False
-                self.image.setPixmap(self.pixmap)
-                self.update_image_by_window_size()
-                self.add_layer(priority='Main')
+                w, h = [int(elem) for elem in item.split('*')]
+                if w <= 20000 and h <= 20000:
+                    self.pixmap = QPixmap(w, h)
+                    self.pixmap.fill(QColor('#FFFFFF'))
+                    self.current_file_name = False
+                    self.image.setPixmap(self.pixmap)
+                    self.update_image_by_window_size()
+                    self.add_layer(priority='Main')
         except ValueError:
             QMessageBox.critical(
                 self, "Ошибка", "Неверный формат введённых данных",
@@ -241,14 +251,14 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
         if fname:
             self.pixmap = QPixmap(fname)
-            self.currect_file_name = fname
+            self.current_file_name = fname
             self.image.setPixmap(self.pixmap)
             self.update_image_by_window_size()
             self.add_layer(priority='Main')
 
     def saveFileDialog(self):
-        if self.currect_file_name:
-            self.pixmap.save(self.currect_file_name)
+        if self.current_file_name:
+            self.pixmap.save(self.current_file_name)
         else:
             self.save_asFileDialog()
 
@@ -256,7 +266,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
         fname, _ = QFileDialog.getSaveFileName(
             self, "Сохранить файл", "", self.file_extensions)
         if fname:
-            self.currect_file_name = fname
+            self.current_file_name = fname
             self.pixmap.save(fname)
 
     # Image events
@@ -287,6 +297,9 @@ class MainWindow(QMainWindow):  # , Ui_Form
                         (main_image_widget_height - image_height) // 2)
         self.image.setPixmap(self.pixmap)
 
+        self.image_size_label_2.setText(
+            f'{self.pixmap.width()} * {self.pixmap.height()}px')
+
     # to change image
 
     def flip_gorizontally_image(self):
@@ -304,29 +317,14 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.image.setPixmap(self.pixmap)
         # self.update_image_by_window_size()
 
-    def turn_90_right_image(self):
-        self.pixmap = self.pixmap.transformed(QTransform().rotate(90))
-
-        self.show_layers(['transformed', QTransform().rotate(90)])
-        self.image.setPixmap(self.pixmap)
-        # self.update_image_by_window_size()
-
-    def turn_90_left_image(self):
-        self.pixmap = self.pixmap.transformed(QTransform().rotate(270))
-
-        self.show_layers(['transformed', QTransform().rotate(270)])
-        self.image.setPixmap(self.pixmap)
-        # self.update_image_by_window_size()
-
-    def turn_180_image(self):
-        self.pixmap = self.pixmap.transformed(QTransform().rotate(180))
-
-        self.show_layers(['transformed', QTransform().rotate(180)])
+    def turn_image(self, rotate):
+        self.pixmap = self.pixmap.transformed(QTransform().rotate(rotate))
+        self.show_layers(['transformed', QTransform().rotate(rotate)])
         self.image.setPixmap(self.pixmap)
         # self.update_image_by_window_size()
 
     def show_info_form(self):
-        self.second_form = InfoForm(self)
+        self.second_form = InfoForm()
         self.second_form.show()
 
     # Change
@@ -336,17 +334,15 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.font.setBold(self.bold.isChecked())
         self.font.setItalic(self.italic.isChecked())
         self.font.setUnderline(self.underline.isChecked())
-        self.change_size_of_tool()
 
     def change_tool(self, button):
         self.active_tool = button.objectName()
-
-        cursor = QCursor(QPixmap(f'cursors/{self.active_tool}.png'), 0, 0)
-        self.image.setCursor(cursor)
+        self.change_cursor(self.active_tool)
+        self.change_comment(self.active_tool)
 
         # When you change the tool, the temp parts of tools (temp text or alpha border) should be removed
         self.priority = None
-        self.text_content = ""
+        self.current_text = ""
         self.polygon_points = []
 
         if self.active_tool == self.text.objectName():
@@ -365,6 +361,23 @@ class MainWindow(QMainWindow):  # , Ui_Form
         button = self.sender()
         self.active_color = button
 
+    def change_cursor(self, tool_name):
+        con = sqlite3.connect('tool_cursors_settings.sqlite')
+        cur = con.cursor()
+        res = cur.execute(
+            """SELECT im, pos_x, pos_y FROM cursors 
+            WHERE id = (SELECT cur_id from tools WHERE name = ?)""",
+            (tool_name,)).fetchall()
+        con.close()
+
+        im_cur, pos_x, pos_y = res[0]
+        self.image.setCursor(QCursor(QPixmap(im_cur), pos_x, pos_y))
+
+    def change_comment(self, tool_name):
+        with open('tool_comments.csv', 'rt', encoding='UTF-8', newline='') as csv_file:
+            self.info_label.setText(list(DictReader(
+                csv_file, delimiter=';', quotechar='"'))[0][tool_name])
+
     # Color buttons events.
 
     def quick_change_color(self):
@@ -373,33 +386,27 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.set_background_btn_color(color)
 
     def set_background_btn_color(self, color, btn=False):
-        if not btn:
-            btn = self.active_color
+        btn = btn if btn else self.active_color
         btn.setStyleSheet(
             'QPushButton:pressed {background-color: rgb(85, 170, 255);' +
             'border-left: 28px solid rgb(85, 170, 255);border: none;}' +
             'QPushButton{border:1px solid #A0A0A0;' +
             f'background: {color}' + ';}')
-        self.give_color[self.active_color] = QColor(color)
+        self.get_main_color[btn] = color
 
     def openColorDialog(self):
         color = QColorDialog.getColor()
         if color.isValid():
             self.set_background_btn_color(color.name())
-            self.give_color[self.active_color] = QColor(color)
-
+            self.get_main_color[self.active_color] = QColor(color)
 
     def reverse_colors_btn(self):
-        first_color_key, second_color_key = self.give_color.keys()
-        self.give_color[first_color_key], self.give_color[second_color_key] = \
-            self.give_color[second_color_key], self.give_color[first_color_key]
-        self.set_background_btn_color(self.give_color[first_color_key], btn=self.main_color_btn_1)
-        self.set_background_btn_color(self.give_color[second_color_key], btn=self.main_color_btn_2)
+        first_color = self.get_main_color[self.main_color_btn_1]
+        second_color = self.get_main_color[self.main_color_btn_2]
+        self.set_background_btn_color(second_color, btn=self.main_color_btn_1)
+        self.set_background_btn_color(first_color, btn=self.main_color_btn_2)
 
     def restart_colors_btn(self):
-        first_color_key, second_color_key = self.give_color.keys()
-        self.give_color[first_color_key], self.give_color[second_color_key] = \
-            self.give_color[second_color_key], self.give_color[first_color_key]
         self.set_background_btn_color(DEFAULT_COLORS[0], btn=self.main_color_btn_1)
         self.set_background_btn_color(DEFAULT_COLORS[1], btn=self.main_color_btn_2)
 
@@ -410,7 +417,6 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.cursor_position_label.setText(
             f'{self.image.mapFromGlobal(QCursor.pos()).x()} * ' +
             f'{self.image.mapFromGlobal(QCursor.pos()).y()}px')
-        self.image_size_label_2.setText(f'{self.pixmap.width()} * {self.pixmap.height()}px')
 
         operation = getattr(self, '%s_mousePressEvent' % self.active_tool)
         if operation:
@@ -418,6 +424,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
             self.update_current_layer(self.priority)
 
     def mouseMoveEvent(self, event):
+        print('Yes')
         operation = getattr(self, '%s_mouseMoveEvent' % self.active_tool, None)
         if operation:
             operation(event)
@@ -435,16 +442,16 @@ class MainWindow(QMainWindow):  # , Ui_Form
         if self.active_tool == 'drawPolygon' and self.polygon_points:
             if event.key() == QtCore.Qt.Key_Return:
                 qp = QPainter(self.current_pixmap)
-                qp.setPen(self.regulary_pen())
+                qp.setPen(self.regularly_pen)
 
-                if self.choose_contour_figure_checkBox.checkState() == Qt.Checked:
-                    qp.setPen(self.regulary_pen())
+                if self.choose_contour_figure_checkBox.checkState() == QtCore.Qt.Checked:
+                    qp.setPen(self.regularly_pen)
                 else:
-                    pen = self.regulary_pen()
-                    pen.setColor(self.give_color[self.main_color_btn_2])
+                    pen = self.regularly_pen
+                    pen.setColor(self.get_main_color[self.main_color_btn_2])
                     qp.setPen(pen)
-                if self.choose_filling_figure_checkBox.checkState() == Qt.Checked:
-                    qp.setBrush(self.give_color[self.main_color_btn_2])
+                if self.choose_filling_figure_checkBox.checkState() == QtCore.Qt.Checked:
+                    qp.setBrush(QColor(self.get_main_color[self.main_color_btn_2]))
 
                 qp.drawPolygon(*self.polygon_points)
 
@@ -468,8 +475,8 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def brush_mouseMoveEvent(self, event):
         qp = QPainter(self.current_pixmap)
-        qp.setPen(QPen(QColor(self.give_color[self.active_color]),
-                             self.tool_size, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        qp.setPen(QPen(QColor(self.get_main_color[self.active_color]),
+                       self.tool_size, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin))
 
         qp.drawLine(self.lastPoint, self.image.mapFromGlobal(QCursor.pos()))
         self.lastPoint = self.image.mapFromGlobal(QCursor.pos())
@@ -488,8 +495,8 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def pencil_mouseMoveEvent(self, event):
         qp = QPainter(self.current_pixmap)
-        qp.setPen(QPen(QColor(self.give_color[self.active_color]),
-                             1, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+        qp.setPen(QPen(QColor(self.get_main_color[self.active_color]),
+                       1, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin))
 
         qp.drawLine(self.lastPoint, self.image.mapFromGlobal(QCursor.pos()))
         self.lastPoint = self.image.mapFromGlobal(QCursor.pos())
@@ -511,7 +518,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
         if self.current_pixmap.hasAlpha():
             qp.setCompositionMode(QPainter.CompositionMode_Clear)
         qp.setPen(QPen(QColor(255, 255, 255, 255), self.tool_size,
-                       Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+                       QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin))
 
         qp.drawLine(self.lastPoint, self.image.mapFromGlobal(QCursor.pos()))
         self.lastPoint = self.image.mapFromGlobal(QCursor.pos())
@@ -525,7 +532,6 @@ class MainWindow(QMainWindow):  # , Ui_Form
     # Pipette events.
 
     def pipette_mousePressEvent(self, event):
-        self.image.setCursor(self.PipetteCursor)
         image = self.pixmap.toImage()
         pixel = image.pixel(self.image.mapFromGlobal(QCursor.pos()))
         color_of_pixel = QColor(pixel).name()
@@ -540,8 +546,9 @@ class MainWindow(QMainWindow):  # , Ui_Form
     # Filling events.
 
     def filling_mousePressEvent(self, event):
+        self.change_cursor('wait')
         qp = QPainter(self.current_pixmap)
-        qp.setPen(QPen(QColor(self.give_color[self.active_color])))
+        qp.setPen(QPen(QColor(self.get_main_color[self.active_color])))
 
         im = self.current_pixmap.toImage()
         im_width, im_height = im.width(), im.height()
@@ -565,6 +572,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
                 qp.drawPoint(QtCore.QPoint(pix_x, pix_y))
                 add_queue_points(pix_x, pix_y)
 
+        self.change_cursor(self.active_tool)
         self.update()
         self.priority = None
 
@@ -572,24 +580,24 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def text_mousePressEvent(self, event):
         self.firstPoint = self.image.mapFromGlobal(QCursor.pos())
-        self.text_content = f"\n\n\n"
+        self.current_text = f"\n\n\n"
 
     def text_writeOnScreen(self, event):
         self.priority = 'temp'
         if event.key() == QtCore.Qt.Key_Backspace:
-            self.text_content = self.text_content[:-1]
+            self.current_text = self.current_text[:-1]
         elif event.key() == [QtCore.Qt.SHIFT + QtCore.Qt.Key_Return]:
-            self.text_content += 'LOKA'
+            self.current_text += 'LOKA'
         elif event.key() == QtCore.Qt.Key_Return:
             self.priority = None
         else:
-            self.text_content += event.text()
+            self.current_text += event.text()
         qp = QPainter(self.current_pixmap)
-        qp.setPen(self.regulary_pen())
+        qp.setPen(self.regularly_pen)
         qp.setFont(self.font)
-        qp.drawText(self.firstPoint, self.text_content)
+        qp.drawText(self.firstPoint, self.current_text)
         # TODO хочу реализовать текст через создание квадрата, а потом написание текста, который будет расположен внутри
-        # qp.drawText(event.rect(), Qt.AlignCenter, self.text)
+        # qp.drawText(event.rect(), QtCore.Qt.AlignCenter, self.text)
         self.update()
 
     # make form for drawForm_mouseMoveEvents
@@ -607,10 +615,14 @@ class MainWindow(QMainWindow):  # , Ui_Form
         qp.pen().setDashOffset(1)
 
         self.rect_for_draw = QtCore.QRect(self.firstPoint.x(), self.firstPoint.y(),
-                                      self.lastPoint.x(), self.lastPoint.y())
+                                          self.lastPoint.x(), self.lastPoint.y())
 
         if self.active_tool == 'drawRoundedRect':
-            getattr(qp, self.active_tool)(self.rect_for_draw, 10, 10, QtCore.Qt.RelativeSize)
+            point_1_x, point_1_y = self.firstPoint.x(), self.firstPoint.y()
+            point_2_x, point_2_y = self.lastPoint.x(), self.lastPoint.y()
+            print(point_1_x, point_1_y, point_2_x, point_2_y)
+            getattr(qp, self.active_tool)(QtCore.QRect(point_1_x, point_1_y, point_2_x, point_2_y),
+                                          10, 10, QtCore.Qt.RelativeSize)
         else:
             if self.active_tool == 'drawPolygon':
                 qp.drawPolygon(*self.polygon_points)
@@ -620,14 +632,14 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def drawForm_mouseReleaseEvent(self, event):
         qp = QPainter(self.current_pixmap)
-        if self.choose_contour_figure_checkBox.checkState() == Qt.Checked:
-            qp.setPen(self.regulary_pen())
+        if self.choose_contour_figure_checkBox.checkState() == QtCore.Qt.Checked:
+            qp.setPen(self.regularly_pen)
         else:
-            pen = self.regulary_pen()
-            pen.setColor(self.give_color[self.main_color_btn_2])
+            pen = self.regularly_pen
+            pen.setColor(self.get_main_color[self.main_color_btn_2])
             qp.setPen(pen)
-        if self.choose_filling_figure_checkBox.checkState() == Qt.Checked:
-            qp.setBrush(self.give_color[self.main_color_btn_2])
+        if self.choose_filling_figure_checkBox.checkState() == QtCore.Qt.Checked:
+            qp.setBrush(QColor(self.get_main_color[self.main_color_btn_2]))
 
         self.rect_for_draw = QtCore.QRect(self.firstPoint.x(), self.firstPoint.y(),
                                           self.lastPoint.x(), self.lastPoint.y())
@@ -661,7 +673,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.pixmap = self.image.pixmap().copy()
 
     def drawLine_mouseReleaseEvent(self, event):
-        self.drawLine_mouseMoveEvent(event, self.regulary_pen())
+        self.drawLine_mouseMoveEvent(event, self.regularly_pen)
 
     # DrawCurveLine events.
 
@@ -680,7 +692,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
     def drawCurveLine_mouseReleaseEvent(self, event):
         if self.is_drawed_line_for_curve:
             self.is_drawed_line_for_curve = False
-            self.drawCurveLineAngle(event, self.regulary_pen())
+            self.drawCurveLineAngle(event, self.regularly_pen)
         else:
             self.drawLine_mouseMoveEvent(event)
             self.is_drawed_line_for_curve = True
@@ -802,19 +814,13 @@ class MainWindow(QMainWindow):  # , Ui_Form
             self.image.setPixmap(self.pixmap)
             self.show_layers([operation, args])
 
-    # Active pen for tools
-
-    def regulary_pen(self):
-        return QPen(
-            QColor(self.give_color[self.active_color]), self.tool_size,
-            QtCore.Qt.SolidLine, QtCore.Qt.SquareCap, QtCore.Qt.MiterJoin)
-
 
 class InfoForm(QWidget):
-    def __init__(self, *args):
+    def __init__(self):
         super().__init__()
         self.setGeometry(300, 150, 300, 350)
         self.setFixedSize(self.width(), self.height())
+        self.setWindowIcon(QIcon('icons/main_icon.png'))
         self.setWindowTitle('PyPaint: info')
 
         self.label_im = QLabel(self)
@@ -824,14 +830,15 @@ class InfoForm(QWidget):
         self.label_im.setPixmap(pixmap)
 
         self.plainTextEdit = QTextBrowser(self)
-        self.plainTextEdit.setGeometry(20 * 3, 290, 260, 50)
-        self.plainTextEdit.setText('     Версия 1.0')
+        self.plainTextEdit.setGeometry(90, 290, 260, 50)
+        self.plainTextEdit.setText('Версия 1.0')
         self.plainTextEdit.setStyleSheet('border: none; background: #F0F0F0;')
 
         HTML = ""
         for i in self.plainTextEdit.toPlainText():
-            color = "#{:06x}".format(random.randrange(0, 0xFFFFFF))
-            HTML += "<font color='{}' size = {} >{}</font>".format(color, random.randrange(5, 8), i)
+            color = "#{:06x}".format(randrange(0, 0xFFFFFF))
+            HTML += "<font color='{}' size = {} >{}</font>".format(
+                color, randrange(5, 8), i)
         self.plainTextEdit.setHtml(HTML)
 
 
