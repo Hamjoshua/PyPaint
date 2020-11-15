@@ -19,7 +19,25 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="91fa5ada-3a11-4463-a4d1-0e98d917844e" name="Default Changelist" comment="" />
+    <list default="true" id="91fa5ada-3a11-4463-a4d1-0e98d917844e" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/Analysis-00.toc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/EXE-00.toc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/PKG-00.pkg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/PKG-00.toc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/PYZ-00.pyz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/PYZ-00.toc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/Tree-00.toc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/Tree-01.toc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/base_library.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/main.exe.manifest" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/warn-main.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/main/xref-main.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/main.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/icons/main_icon.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.spec" beforeDir="false" afterPath="$PROJECT_DIR$/main.spec" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -37,7 +55,7 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../../../PyCharm2" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunManager">
@@ -102,34 +120,34 @@
       <screen x="0" y="0" width="1366" height="722" />
     </state>
     <state x="137" y="16" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1366.722@0.0.1366.722" timestamp="1605326242223" />
-    <state x="404" y="163" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1605412520142">
+    <state x="404" y="163" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1605433950344">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state x="404" y="163" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1366.722@0.0.1366.722" timestamp="1605412520142" />
+    <state x="404" y="163" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1366.722@0.0.1366.722" timestamp="1605433950344" />
     <state x="392" y="0" key="#main" timestamp="1605331585402">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
     <state x="392" y="0" key="#main/0.0.1366.722@0.0.1366.722" timestamp="1605331585402" />
-    <state x="463" y="116" key="FileChooserDialogImpl" timestamp="1605327772836">
+    <state x="463" y="116" key="FileChooserDialogImpl" timestamp="1605434128395">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state x="463" y="116" key="FileChooserDialogImpl/0.0.1366.722@0.0.1366.722" timestamp="1605327772836" />
-    <state width="1345" height="135" key="GridCell.Tab.0.bottom" timestamp="1605430597473">
+    <state x="463" y="116" key="FileChooserDialogImpl/0.0.1366.722@0.0.1366.722" timestamp="1605434128395" />
+    <state width="1345" height="135" key="GridCell.Tab.0.bottom" timestamp="1605437802852">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="135" key="GridCell.Tab.0.bottom/0.0.1366.722@0.0.1366.722" timestamp="1605430597473" />
-    <state width="1345" height="135" key="GridCell.Tab.0.center" timestamp="1605430597473">
+    <state width="1345" height="135" key="GridCell.Tab.0.bottom/0.0.1366.722@0.0.1366.722" timestamp="1605437802852" />
+    <state width="1345" height="135" key="GridCell.Tab.0.center" timestamp="1605437802851">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="135" key="GridCell.Tab.0.center/0.0.1366.722@0.0.1366.722" timestamp="1605430597473" />
-    <state width="1345" height="135" key="GridCell.Tab.0.left" timestamp="1605430597473">
+    <state width="1345" height="135" key="GridCell.Tab.0.center/0.0.1366.722@0.0.1366.722" timestamp="1605437802851" />
+    <state width="1345" height="135" key="GridCell.Tab.0.left" timestamp="1605437802851">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="135" key="GridCell.Tab.0.left/0.0.1366.722@0.0.1366.722" timestamp="1605430597473" />
-    <state width="1345" height="135" key="GridCell.Tab.0.right" timestamp="1605430597473">
+    <state width="1345" height="135" key="GridCell.Tab.0.left/0.0.1366.722@0.0.1366.722" timestamp="1605437802851" />
+    <state width="1345" height="135" key="GridCell.Tab.0.right" timestamp="1605437802852">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="135" key="GridCell.Tab.0.right/0.0.1366.722@0.0.1366.722" timestamp="1605430597473" />
+    <state width="1345" height="135" key="GridCell.Tab.0.right/0.0.1366.722@0.0.1366.722" timestamp="1605437802852" />
     <state width="1345" height="220" key="GridCell.Tab.1.bottom" timestamp="1605339104447">
       <screen x="0" y="0" width="1366" height="722" />
     </state>

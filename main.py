@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QButtonGroup, QLabel, QTextBrowser
 from PyQt5.QtWidgets import QInputDialog, QFileDialog, QColorDialog, \
     QMessageBox, QListWidgetItem
 
-from PyQt5 import uic
+from MainWindow import Ui_MainWindow
 
 SELECTION_PEN = QPen(QColor(0xff, 0xff, 0xff), 1, QtCore.Qt.DashLine)
 MAKE_FORM_PEN = QPen(QColor(0xff, 0xff, 0xff), 1, QtCore.Qt.SolidLine)
@@ -59,10 +59,10 @@ class History:
         return self.__repr__()
 
 
-class MainWindow(QMainWindow):  # , Ui_Form
+class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
-        uic.loadUi('MainWindow.ui', self)
+        self.setupUi(self)
         self.setWindowTitle('PyPaint')
         self.setWindowIcon(QIcon('icons/main_icon.ico'))
 
@@ -248,13 +248,16 @@ class MainWindow(QMainWindow):  # , Ui_Form
         for row in range(self.listWidget.count()):
             item = self.listWidget.item(row)
             regex = r"[(]\d*[)]"
-            names.append(item.text().split(' (')[0] if re.findall(regex, item.text()) else item.text())
+            names.append(item.text().split(' (')[0]
+                         if re.findall(regex, item.text()) else item.text())
             if names.count(item.text()) > 1:
                 item.setText(f'{item.text()} ({names.count(item.text()) - 1})')
 
             if item.checkState() == QtCore.Qt.Checked:
                 if operation:
-                    self.layers_dict[item.statusTip()] = getattr(self.layers_dict[item.statusTip()], operation[0])(operation[1])
+                    self.layers_dict[item.statusTip()] = \
+                        getattr(self.layers_dict[item.statusTip()],
+                                operation[0])(operation[1])
                     self.current_pixmap = self.layers_dict[item.statusTip()]
                     item.setIcon(QIcon(self.layers_dict[item.statusTip()]))
                 qp.drawPixmap(0, 0, self.layers_dict[item.statusTip()])
@@ -354,7 +357,8 @@ class MainWindow(QMainWindow):  # , Ui_Form
                 image_width = main_image_widget_width
                 image_height = self.pixmap.height() * image_width // self.pixmap.width()
 
-        self.pixmap = self.pixmap.scaled(image_width, image_height, QtCore.Qt.KeepAspectRatio)
+        self.pixmap = self.pixmap.scaled(
+            image_width, image_height, QtCore.Qt.KeepAspectRatio)
         self.image.resize(image_width, image_height)
         self.image.move((main_image_widget_width - image_width) // 2,
                         (main_image_widget_height - image_height) // 2)
@@ -402,7 +406,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.change_cursor(self.active_tool)
         self.change_comment(self.active_tool)
 
-        # When you change the tool, the temp parts of tools (temp text or alpha border) should be removed
+        # When you change the tool, the temp parts of tools should be removed
         self.priority = None
         self.current_text = ""
         self.polygon_points = []
@@ -495,7 +499,8 @@ class MainWindow(QMainWindow):  # , Ui_Form
         operation = getattr(self, '%s_mouseReleaseEvent' % self.active_tool, None)
         if operation:
             operation(event)
-            if self.active_tool != 'text' or self.active_tool != 'drawPolygon' or self.active_tool != 'select':
+            if self.active_tool != 'text' or self.active_tool != 'drawPolygon' or \
+                    self.active_tool != 'select':
                 self.update_current_layer('release')
 
     # Keyboard events.
@@ -537,8 +542,8 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def brush_mouseMoveEvent(self, event):
         qp = QPainter(self.current_pixmap)
-        qp.setPen(QPen(QColor(self.get_main_color[self.active_color]),
-                       self.tool_size, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin))
+        qp.setPen(QPen(QColor(self.get_main_color[self.active_color]), self.tool_size,
+                       QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin))
 
         qp.drawLine(self.lastPoint, self.image.mapFromGlobal(QCursor.pos()))
         self.lastPoint = self.image.mapFromGlobal(QCursor.pos())
@@ -557,8 +562,8 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def pencil_mouseMoveEvent(self, event):
         qp = QPainter(self.current_pixmap)
-        qp.setPen(QPen(QColor(self.get_main_color[self.active_color]),
-                       1, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin))
+        qp.setPen(QPen(QColor(self.get_main_color[self.active_color]), 1,
+                       QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin))
 
         qp.drawLine(self.lastPoint, self.image.mapFromGlobal(QCursor.pos()))
         self.lastPoint = self.image.mapFromGlobal(QCursor.pos())
@@ -623,7 +628,8 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
         def add_queue_points(x, y):
             for x1, y1 in ((x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)):
-                if 0 <= x1 <= im_width and 0 <= y1 <= im_height and (x1, y1) not in colored_pix:
+                if 0 <= x1 <= im_width and 0 <= y1 <= im_height and \
+                        (x1, y1) not in colored_pix:
                     pix_queue.add((x1, y1))
                     colored_pix.add((x1, y1))
 
@@ -680,8 +686,9 @@ class MainWindow(QMainWindow):  # , Ui_Form
         if self.active_tool == 'drawRoundedRect':
             point_1_x, point_1_y = self.firstPoint.x(), self.firstPoint.y()
             point_2_x, point_2_y = self.lastPoint.x(), self.lastPoint.y()
-            getattr(qp, self.active_tool)(QtCore.QRect(point_1_x, point_1_y, point_2_x, point_2_y),
-                                          10, 10, QtCore.Qt.RelativeSize)
+            getattr(qp, self.active_tool)(QtCore.QRect(
+                point_1_x, point_1_y, point_2_x, point_2_y),
+                10, 10, QtCore.Qt.RelativeSize)
         else:
             if self.active_tool == 'drawPolygon':
                 qp.drawPolygon(*self.polygon_points)
@@ -762,12 +769,14 @@ class MainWindow(QMainWindow):  # , Ui_Form
     def drawCurveLineAngle(self, event, pen=MAKE_FORM_PEN):
         def calculateAngle(for_last_point=False):
             if for_last_point:
-                p1, p2, p3 = self.rect_for_draw.bottomLeft(), self.rect_for_draw.center(), self.lastPoint
+                p1, p2, p3 = self.rect_for_draw.bottomLeft(), \
+                             self.rect_for_draw.center(), self.lastPoint
             else:
-                p1, p2, p3 = self.firstPoint, self.rect_for_draw.center(), self.lastPoint
+                p1, p2, p3 = self.firstPoint, \
+                             self.rect_for_draw.center(), self.lastPoint
             a, b, c = sqrt(((p2.x() - p1.x()) ** 2) + ((p2.y() - p1.y()) ** 2)), \
-                               sqrt(((p3.x() - p2.x()) ** 2) + ((p3.y() - p2.y()) ** 2)), \
-                               sqrt(((p3.x() - p1.x()) ** 2) + ((p3.y() - p1.y()) ** 2))
+                      sqrt(((p3.x() - p2.x()) ** 2) + ((p3.y() - p2.y()) ** 2)), \
+                      sqrt(((p3.x() - p1.x()) ** 2) + ((p3.y() - p1.y()) ** 2))
             angle = round(degrees(acos((a**2 + b**2 - c**2) / (2 * a * b))), 0)
             return angle
 
@@ -780,7 +789,8 @@ class MainWindow(QMainWindow):  # , Ui_Form
             self.priority = None
         qp.setPen(pen)
         qp.pen().setDashOffset(1)
-        startAngle, spanAngle = calculateAngle() * 16, calculateAngle(True) * 16
+        startAngle, spanAngle = \
+            calculateAngle() * 16, calculateAngle(True) * 16
         qp.drawArc(self.rect_for_draw, startAngle, spanAngle)
         self.update()
         self.pixmap = self.image.pixmap().copy()
@@ -791,7 +801,6 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.drawForm_mousePressEvent(event)
 
     def drawEllipse_mouseMoveEvent(self, event):
-        # self.image.setPixmap(self.pixmap.copy())
         qp = QPainter(self.current_pixmap)
         self.drawForm_mouseMoveEvent(event, qp)
 
@@ -804,7 +813,6 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.drawForm_mousePressEvent(event)
 
     def drawRect_mouseMoveEvent(self, event):
-        # self.image.setPixmap(self.pixmap.copy())
         qp = QPainter(self.current_pixmap)
         self.drawForm_mouseMoveEvent(event, qp)
 
@@ -817,7 +825,6 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.drawForm_mousePressEvent(event)
 
     def drawRoundedRect_mouseMoveEvent(self, event):
-        # self.image.setPixmap(self.pixmap.copy())
         qp = QPainter(self.current_pixmap)
         self.drawForm_mouseMoveEvent(event, qp)
 
@@ -886,12 +893,12 @@ class InfoForm(QWidget):
         super().__init__()
         self.setGeometry(300, 150, 300, 350)
         self.setFixedSize(self.width(), self.height())
-        self.setWindowIcon(QIcon('icons/main_icon.png'))
+        self.setWindowIcon(QIcon('icons/main_icon.ico'))
         self.setWindowTitle('PyPaint: info')
 
         self.label_im = QLabel(self)
         self.label_im.setGeometry(20, 20, 260, 260)
-        pixmap = QPixmap('icons/main_icon.png')
+        pixmap = QPixmap('icons/main_icon.ico')
         pixmap = pixmap.scaled(260, 260)
         self.label_im.setPixmap(pixmap)
 
