@@ -16,7 +16,6 @@ from PyQt5 import uic
 
 SELECTION_PEN = QPen(QColor(0xff, 0xff, 0xff), 1, QtCore.Qt.DashLine)
 MAKE_FORM_PEN = QPen(QColor(0xff, 0xff, 0xff), 1, QtCore.Qt.SolidLine)
-CADRE_FORM_PEN = QPen(QColor(0xff, 0xff, 0xff), 5, QtCore.Qt.SolidLine)
 
 COLORS = ['#000000', '#880016', '#ED1B24', '#FF7F26',
           '#FEF200', '#21B24D', '#00A3E8', '#3F47CC',
@@ -25,7 +24,39 @@ COLORS = ['#000000', '#880016', '#ED1B24', '#FF7F26',
 
 DEFAULT_COLORS = ['#000000', '#FFFFFF']
 
-LAYERS_DICT = dict()  # ???
+
+class history:
+    def __init__(self, some_value=None):
+        if some_value:
+            self.history = list(some_value)
+        else:
+            self.history = []
+        self.count = 0
+
+    def next(self):
+        if self.count + 1 < len(self.history):
+            self.count += 1
+            return self.history[self.count]
+        return 404
+
+    def back(self):
+        if self.count - 1 > -1:
+            self.count -= 1
+            return self.history[self.count]
+        return 404
+
+    def add(self, num):
+        self.history = self.history[:self.count + 1]
+        self.history.append(num)
+        if len(self.history) > 10:
+            self.history = self.history[1:]
+        self.count = len(self.history) - 1
+
+    def __repr__(self):
+        return str(self.history) if self.history else 'History is empty'
+
+    def __str__(self):
+        return self.__repr__()
 
 
 class MainWindow(QMainWindow):  # , Ui_Form
@@ -58,6 +89,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.is_drawed_line_for_curve = False
         self.polygon_points = []
         self.rect_for_draw = QtCore.QRect()
+        self.is_text_can_writed = False
 
         self.file_extensions = "All Files (*.png *.jpg);;JPG (*.jpg);;PNG (*.png)"
         self.default_sizes_of_created_image = \
@@ -73,7 +105,10 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.temp_pixmap = self.pixmap.copy()
         self.current_file_name = False
         self.image.setPixmap(self.pixmap)
+        self.canvas_history = history()
+        self.layers_dict = dict()
         self.add_layer(priority='Main')
+        self.add_to_history()
         self.update_image_by_window_size()
         self.priority = None
 
@@ -127,6 +162,10 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.tools_group.addButton(self.drawPolygon)
         self.tools_group.buttonClicked.connect(self.change_tool)
 
+        # Init history buttons
+        self.go_next.triggered.connect(self.next_history)
+        self.go_back.triggered.connect(self.back_history)
+
         # Init triggers for widgets in tool_settings_frame
         self.change_size_spinBox.valueChanged.connect(self.change_size_of_tool)
         self.fontComboBox.activated.connect(self.change_font)
@@ -147,6 +186,28 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.add_layer_btn.clicked.connect(self.add_layer)
         self.del_layer_btn.clicked.connect(self.del_layer)
         self.listWidget.itemSelectionChanged.connect(self.layer_selected)
+
+    # History actions
+
+    def add_to_history(self):
+        value = self.current_pixmap.copy()
+        layer = self.listWidget.selectedItems()[-1]
+        id = layer.statusTip()
+        self.canvas_history.add([id, value])
+
+    def next_history(self):
+        zip_result = self.canvas_history.next()
+        if zip_result != 404:
+            id, value = zip_result
+            self.layers_dict[id] = value.copy()
+            self.current_pixmap = self.layers_dict[id]
+
+    def back_history(self):
+        zip_result = self.canvas_history.back()
+        if zip_result != 404:
+            id, value = zip_result
+            self.layers_dict[id] = value.copy()
+            self.current_pixmap = self.layers_dict[id]
 
     # Layers actions
 
@@ -171,7 +232,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
             if priority == 'Main':
                 self.current_pixmap = self.pixmap.copy()
                 layer.setSelected(True)
-            LAYERS_DICT[self.listWidget.item(count_layers).statusTip()] = pixmap_for_layer
+            self.layers_dict[self.listWidget.item(count_layers).statusTip()] = pixmap_for_layer
 
     def del_layer(self):
         if not self.pixmap.isNull():
@@ -193,10 +254,10 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
             if item.checkState() == QtCore.Qt.Checked:
                 if operation:
-                    LAYERS_DICT[item.statusTip()] = getattr(LAYERS_DICT[item.statusTip()], operation[0])(operation[1])
-                    self.current_pixmap = LAYERS_DICT[item.statusTip()]
-                    item.setIcon(QIcon(LAYERS_DICT[item.statusTip()]))
-                qp.drawPixmap(0, 0, LAYERS_DICT[item.statusTip()])
+                    self.layers_dict[item.statusTip()] = getattr(self.layers_dict[item.statusTip()], operation[0])(operation[1])
+                    self.current_pixmap = self.layers_dict[item.statusTip()]
+                    item.setIcon(QIcon(self.layers_dict[item.statusTip()]))
+                qp.drawPixmap(0, 0, self.layers_dict[item.statusTip()])
 
         # Update all
         self.pixmap = all_layers_pixmap
@@ -207,17 +268,19 @@ class MainWindow(QMainWindow):  # , Ui_Form
             if priority == 'temp':
                 self.temped = True
                 layer = self.listWidget.selectedItems()[-1]
-                LAYERS_DICT[layer.statusTip()] = self.current_pixmap
+                self.layers_dict[layer.statusTip()] = self.current_pixmap
                 self.current_pixmap = self.temp_pixmap.copy()
             else:
                 self.temp_pixmap = self.current_pixmap.copy()
                 layer = self.listWidget.selectedItems()[-1]
                 layer.setIcon(QIcon(self.current_pixmap))
-                LAYERS_DICT[layer.statusTip()] = self.current_pixmap.copy()
+                self.layers_dict[layer.statusTip()] = self.current_pixmap.copy()
+                if priority == 'release':
+                    self.add_to_history()
 
     def layer_selected(self):
         if self.listWidget.currentItem():
-            layer = LAYERS_DICT[self.listWidget.currentItem().statusTip()]
+            layer = self.layers_dict[self.listWidget.currentItem().statusTip()]
             self.current_pixmap = layer
             self.temp_pixmap = self.current_pixmap.copy()
 
@@ -307,7 +370,6 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
         self.show_layers(['transformed', QTransform().scale(1, -1)])
         self.image.setPixmap(self.pixmap)
-        # TODO Если убрать внизу комментарий, то главный пихмап потеряет свой оригинал. размер
         # self.update_image_by_window_size()
 
     def flip_vertically_image(self):
@@ -398,7 +460,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
         color = QColorDialog.getColor()
         if color.isValid():
             self.set_background_btn_color(color.name())
-            self.get_main_color[self.active_color] = color.name()
+            self.get_main_color[self.active_color] = QColor(color)
 
     def reverse_colors_btn(self):
         first_color = self.get_main_color[self.main_color_btn_1]
@@ -433,7 +495,8 @@ class MainWindow(QMainWindow):  # , Ui_Form
         operation = getattr(self, '%s_mouseReleaseEvent' % self.active_tool, None)
         if operation:
             operation(event)
-            self.update_current_layer(self.priority)
+            if self.active_tool != 'text' or self.active_tool != 'drawPolygon' or self.active_tool != 'select':
+                self.update_current_layer('release')
 
     # Keyboard events.
 
@@ -447,7 +510,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
                     qp.setPen(self.regularly_pen)
                 else:
                     pen = self.regularly_pen
-                    pen.setColor(QColor(self.get_main_color[self.main_color_btn_2]))
+                    pen.setColor(self.get_main_color[self.main_color_btn_2])
                     qp.setPen(pen)
                 if self.choose_filling_figure_checkBox.checkState() == QtCore.Qt.Checked:
                     qp.setBrush(QColor(self.get_main_color[self.main_color_btn_2]))
@@ -458,12 +521,12 @@ class MainWindow(QMainWindow):  # , Ui_Form
                 self.pixmap = self.image.pixmap().copy()
                 self.polygon_points = []
                 self.priority = None
-                self.update_current_layer(self.priority)
-                # TODO добавить историю. Но только в update_current_layer
-                # self.history.add(self.pixmap.copy())
-        elif self.active_tool == 'text':
+                self.update_current_layer('release')
+
+        elif self.active_tool == 'text' and self.is_text_can_writed:
             self.text_writeOnScreen(event)
             self.update_current_layer(self.priority)
+            self.priority = None
 
     # Brush events.
 
@@ -579,24 +642,22 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def text_mousePressEvent(self, event):
         self.firstPoint = self.image.mapFromGlobal(QCursor.pos())
-        self.current_text = f"\n\n\n"
+        self.current_text = ""
+        self.is_text_can_writed = True
 
     def text_writeOnScreen(self, event):
         self.priority = 'temp'
         if event.key() == QtCore.Qt.Key_Backspace:
             self.current_text = self.current_text[:-1]
-        elif event.key() == [QtCore.Qt.SHIFT + QtCore.Qt.Key_Return]:
-            self.current_text += 'LOKA'
         elif event.key() == QtCore.Qt.Key_Return:
-            self.priority = None
+            self.priority = 'release'
+            self.is_text_can_writed = False
         else:
             self.current_text += event.text()
         qp = QPainter(self.current_pixmap)
-        qp.setPen(QPen(QColor(self.get_main_color[self.active_color])))
+        qp.setPen(self.regularly_pen)
         qp.setFont(self.font)
         qp.drawText(self.firstPoint, self.current_text)
-        # TODO хочу реализовать текст через создание квадрата, а потом написание текста, который будет расположен внутри
-        # qp.drawText(event.rect(), QtCore.Qt.AlignCenter, self.text)
         self.update()
 
     # make form for drawForm_mouseMoveEvents
@@ -617,7 +678,10 @@ class MainWindow(QMainWindow):  # , Ui_Form
                                           self.lastPoint.x(), self.lastPoint.y())
 
         if self.active_tool == 'drawRoundedRect':
-            getattr(qp, self.active_tool)(self.rect_for_draw, 10, 10, QtCore.Qt.RelativeSize)
+            point_1_x, point_1_y = self.firstPoint.x(), self.firstPoint.y()
+            point_2_x, point_2_y = self.lastPoint.x(), self.lastPoint.y()
+            getattr(qp, self.active_tool)(QtCore.QRect(point_1_x, point_1_y, point_2_x, point_2_y),
+                                          10, 10, QtCore.Qt.RelativeSize)
         else:
             if self.active_tool == 'drawPolygon':
                 qp.drawPolygon(*self.polygon_points)
@@ -627,10 +691,8 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def drawForm_mouseReleaseEvent(self, event):
         qp = QPainter(self.current_pixmap)
-        if self.choose_contour_figure_checkBox.isChecked():
-            pen = self.regularly_pen
-            pen.setColor(QColor(self.get_main_color[self.main_color_btn_1]))
-            qp.setPen(pen)
+        if self.choose_contour_figure_checkBox.checkState() == QtCore.Qt.Checked:
+            qp.setPen(self.regularly_pen)
         else:
             pen = self.regularly_pen
             pen.setColor(QColor(self.get_main_color[self.main_color_btn_2]))
@@ -693,6 +755,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
         else:
             self.drawLine_mouseMoveEvent(event)
             self.is_drawed_line_for_curve = True
+            self.update_current_layer('temp')
 
     def drawCurveLineAngle(self, event, pen=MAKE_FORM_PEN):
         def calculateAngle(for_last_point=False):
@@ -778,6 +841,7 @@ class MainWindow(QMainWindow):  # , Ui_Form
 
     def drawPolygon_mouseReleaseEvent(self, event):
         self.drawPolygon_mouseMoveEvent(event)
+        self.update_current_layer('temp')
 
     # Select events
 
@@ -789,9 +853,11 @@ class MainWindow(QMainWindow):  # , Ui_Form
         self.active_tool = 'drawRect'
         self.drawForm_mouseMoveEvent(event, qp, SELECTION_PEN)
         self.active_tool = 'select'
+        self.priority = 'temp'
 
     def select_mouseReleaseEvent(self, event):
         self.select_mouseMoveEvent(event)
+        self.update_current_layer('temp')
 
     def clean_selection(self):
         if self.active_tool == 'select':
@@ -810,7 +876,6 @@ class MainWindow(QMainWindow):  # , Ui_Form
             self.pixmap = getattr(self.pixmap, operation)(args)
             self.image.setPixmap(self.pixmap)
             self.show_layers([operation, args])
-            self.update_image_by_window_size()
 
 
 class InfoForm(QWidget):
